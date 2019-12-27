@@ -2,24 +2,23 @@
 
 #include <iomanip>
 
-static constexpr size_t nExtraChars=25+8+6;
 
 #ifdef _WIN32
 #include <windows.h>
-size_t getWidth()
+size_t Lout::getWidth()
 {
     CONSOLE_SCREEN_BUFFER_INFO nfo;
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),&nfo);
-    return nfo.srWindow.Right-nfo.srWindow.Left-nExtraChars;
+    return nfo.srWindow.Right-nfo.srWindow.Left-width;
 }
 #else
 #include <sys/ioctl.h> //ioctl() and TIOCGWINSZ
 #include <unistd.h> // for STDOUT_FILENO
-size_t getWidth()
+size_t Lout::getWidth()
 {
     struct winsize size;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
-    return size.ws_col-nExtraChars;
+    return size.ws_col-width;
 }
 #endif
 
@@ -27,14 +26,17 @@ using namespace std;
 
 Lout lout;
 
+constexpr std::array<char,4> Lout::tickChars;
+
 std::ostream &operator <<(std::ostream &out, const QString &str)
 {
-    return out << str.toUtf8().toStdString();
+    const auto txt = str.toUtf8().toStdString();
+    return out << txt;
 }
 
 std::ostream &operator <<(std::ostream &out, const std::string &in)
 {
-    const size_t width=getWidth();
+    const size_t width=lout.getWidth();
     for(size_t i=0;;)
     {
         const size_t j=i;
@@ -46,7 +48,7 @@ std::ostream &operator <<(std::ostream &out, const std::string &in)
             out << flush;
             return out;
         }
-        out << in.substr(j,i) << '\n' << std::left << std::setfill(' ') << std::setw(29);
+        out << in.substr(j,i) << '\n' << std::right << std::setfill(' ') << std::setw(lout.fmt.size()+7)<<' ';
     }
 }
 
@@ -77,7 +79,7 @@ void Lout::brackets(const string &str)
 
     constexpr size_t half=brWidth/2;
 
-    cout << setfill('\b') << setw(brWidth+1) << '\b' << setfill(' ') << '['<<setw(half)<<right;
+    cout << setfill('\b') << setw(brWidth+3) <<right<< '['<< setfill(' ')<<setw(half)<<right;
     std::operator<<(cout,strHalfL);
     cout<<setw(half)<<left;
     std::operator<<(cout,strHalfR);
@@ -88,11 +90,13 @@ void Lout::brackets(const string &str)
 void Lout::ok()
 {
     brackets("OK");
+    cout << '\n';
 }
 
 void Lout::fail()
 {
     brackets("FAIL");
+    cout << '\n';
 }
 
 void Lout::tick()
@@ -108,4 +112,9 @@ void Lout::percent(const size_t cur, const size_t total)
     str<< *curTick<<' '<<setw(3)<<percent<<'%';
     brackets(str.str());
     nextTick();
+}
+
+Lout::Lout():fmt("dd.MM.yyyy hh:mm:ss.zzz"),width(fmt.size()+1+brWidth+8)
+{
+
 }
