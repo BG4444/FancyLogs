@@ -1,5 +1,5 @@
 #include "lout.h"
-
+#include <sstream>
 #include <iomanip>
 
 
