@@ -1,4 +1,4 @@
-#ifndef LOUT_H
+﻿#ifndef LOUT_H
 #define LOUT_H
 
 #include <iostream>
@@ -21,8 +21,16 @@ class Lout
     }
     constexpr static std::array<char,4> tickChars{'|','/','-','\\'};
     std::array<char,4>::const_iterator curTick=tickChars.cbegin();
-    void nextTick();
+    void nextTick();        
+    size_t lastX=0;
 public:
+    void shift(size_t count);
+    void resetX();
+    void newLine();
+    size_t getLastX()
+    {
+        return lastX;
+    }
     size_t getWidth();
     const QLatin1String fmt;
     const size_t width;

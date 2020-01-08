@@ -36,19 +36,26 @@ std::ostream &operator <<(std::ostream &out, const QString &str)
 
 std::ostream &operator <<(std::ostream &out, const std::string &in)
 {
-    const size_t width=lout.getWidth();
+    const size_t width=lout.getWidth();  //width of text area
     for(size_t i=0;;)
     {
         const size_t j=i;
-        i+=width;
-        if(i>=in.size())
+        const auto oldX = lout.getLastX();
+        const auto add=width - oldX;
+        const auto len = in.size();
+        i+= add;
+
+        if(i>=len)
         {
-            out << std::left << std::setfill(' ') << std::setw(width+Lout::brWidth+2);
-            std::operator<<(out, in.substr(j));
+            const auto outS=in.substr(j);
+            lout.shift(outS.size());
+            std::operator<<(out, outS);
             out << flush;
             return out;
         }
-        out << in.substr(j,i) << '\n' << std::right << std::setfill(' ') << std::setw(lout.fmt.size()+7)<<' ';
+
+        std::operator<<(out, in.substr(j,i-j));
+        lout.newLine();
     }
 }
 
@@ -58,6 +65,25 @@ void Lout::nextTick()
     {
         curTick=tickChars.cbegin();
     }
+    resetX();
+    shift(getWidth());
+    cout << setw(brWidth+3) << setfill('\b') << '\b';
+}
+
+void Lout::shift(size_t count)
+{
+    lastX+=count;
+}
+
+void Lout::resetX()
+{
+    lastX=0;
+}
+
+void Lout::newLine()
+{
+    lout.resetX();
+    cout << '\n' << std::right << std::setfill(' ') << std::setw(lout.fmt.size()+7)<<' ';
 }
 
 void Lout::anounse(const std::string &msg)
@@ -79,11 +105,17 @@ void Lout::brackets(const string &str)
 
     constexpr size_t half=brWidth/2;
 
-    cout << setfill('\b') << setw(brWidth+3) <<right<< '['<< setfill(' ')<<setw(half)<<right;
+    //if(getWidth() - lastX)
+    {
+        cout << std::left << std::setfill(' ') << std::setw(getWidth() - lastX) <<  ' ';
+    }
+    cout << right<< '['<< setfill(' ')<<setw(half)<<right;
     std::operator<<(cout,strHalfL);
     cout<<setw(half)<<left;
     std::operator<<(cout,strHalfR);
     cout<<']'<<flush;
+
+    resetX();
 
 }
 
@@ -100,13 +132,14 @@ void Lout::fail()
 }
 
 void Lout::tick()
-{
+{    
     brackets(std::string(curTick,1));
     nextTick();
 }
 
 void Lout::percent(const size_t cur, const size_t total)
 {
+
     const size_t percent = 100 * cur / total;
     stringstream str;
     str<< *curTick<<' '<<setw(3)<<percent<<'%';
@@ -116,5 +149,5 @@ void Lout::percent(const size_t cur, const size_t total)
 
 Lout::Lout():fmt("dd.MM.yyyy hh:mm:ss.zzz"),width(fmt.size()+1+brWidth+8)
 {
-
+    cout <<"width is " << getWidth() << "\n";
 }
