@@ -105,7 +105,7 @@ void Lout::brackets(const string &str)
 
     constexpr size_t half=brWidth/2;
 
-    //if(getWidth() - lastX)
+    if(getWidth() - lastX)
     {
         cout << std::left << std::setfill(' ') << std::setw(getWidth() - lastX) <<  ' ';
     }
