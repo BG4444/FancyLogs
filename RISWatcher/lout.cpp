@@ -67,7 +67,7 @@ void Lout::nextTick()
     }
     resetX();
     shift(getWidth());
-    cout << setw(brWidth+3) << setfill('\b') << '\b';
+    cout << setw(brWidth+2) << setfill('\b') << '\b';
 }
 
 void Lout::shift(size_t count)
