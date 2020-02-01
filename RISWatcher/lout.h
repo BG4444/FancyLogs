@@ -9,12 +9,15 @@
 #include <QString>
 #include <QDateTime>
 
-std::ostream& operator << (std::ostream& out,const std::string& in);
-
-std::ostream& operator << (std::ostream& out,const QString& str);
-
 class Lout
 {
+public:
+    enum LogLevel
+    {
+        Info,
+        Debug
+    };
+private:
     static auto tm()
     {
         return std::chrono::system_clock::now();
@@ -23,7 +26,9 @@ class Lout
     std::array<char,4>::const_iterator curTick=tickChars.cbegin();
     void nextTick();        
     size_t lastX=0;
-public:
+    LogLevel msgLevel=Info;
+    LogLevel outLevel=Info;
+public:   
     void shift(size_t count);
     void resetX();
     void newLine();
@@ -48,7 +53,15 @@ public:
     void tick();
     void percent(const size_t cur,const size_t total);
     Lout();
+    Lout& operator <<(const Lout::LogLevel lvl)
+    {
+        msgLevel=lvl;
+        return *this;
+    }
 };
+
+std::ostream& operator << (std::ostream& out,const std::string& in);
+std::ostream& operator << (std::ostream& out,const QString& str);
 
 extern Lout lout;
 
