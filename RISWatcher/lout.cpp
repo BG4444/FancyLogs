@@ -57,7 +57,7 @@ Lout& operator <<(Lout &out, const std::string &in)
         }
 
         cout << in.substr(j,i-j);
-        out.newLine();
+        out << newLine;
     }    
 }
 
@@ -85,21 +85,12 @@ void Lout::resetX()
     lastX=0;
 }
 
-void Lout::newLine()
-{
-    if(canMessage())
-    {
-        lout.resetX();
-        cout << '\n' << std::right << std::setfill(' ') << std::setw(fmt.size()+7)<<' ';
-    }
-}
-
 size_t Lout::getLastX() const
 {
     return lastX;
 }
 
-void Lout::brackets(const string &str)
+Lout& Lout::brackets(const string &str)
 {
     if(canMessage())
     {
@@ -121,18 +112,7 @@ void Lout::brackets(const string &str)
 
         resetX();
     }
-}
-
-void Lout::ok()
-{
-    brackets("OK");
-    cout << '\n';
-}
-
-void Lout::fail()
-{
-    brackets("FAIL");
-    cout << '\n';
+    return *this;
 }
 
 void Lout::tick()
@@ -223,6 +203,30 @@ Lout &flush(Lout &out)
     if(out.canMessage())
     {
         cout << flush;
+    }
+    return out;
+}
+
+Lout &ok(Lout &out)
+{
+    out.brackets("OK");
+    cout << '\n';
+    return out;
+}
+
+Lout &fail(Lout &out)
+{
+    out.brackets("FAIL");
+    cout << '\n';
+    return out;
+}
+
+Lout &newLine(Lout &out)
+{
+    if(out.canMessage())
+    {
+        out.resetX();
+        cout << '\n' << std::right << std::setfill(' ') << std::setw(out.fmt.size()+7)<<' ';
     }
     return out;
 }

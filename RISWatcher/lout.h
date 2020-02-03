@@ -31,15 +31,12 @@ private:
 public:   
     void shift(size_t count);
     void resetX();
-    void newLine();
     size_t getLastX() const;
     size_t getWidth();
     const QLatin1String fmt;
     const size_t width;
     static constexpr size_t brWidth=6;        
-    void brackets(const std::string& str=std::string());
-    void ok();
-    void fail();
+    Lout &brackets(const std::string& str=std::string());
     void tick();
     void percent(const size_t cur,const size_t total);
     Lout();    
@@ -59,6 +56,9 @@ Lout& operator << (Lout& out, const char rhs);
 Lout &anounce(Lout &ret);
 Lout &endl(Lout &ret);
 Lout &flush(Lout& out);
+Lout &ok(Lout& out);
+Lout &fail(Lout& out);
+Lout &newLine(Lout& out);
 
 extern Lout lout;
 
