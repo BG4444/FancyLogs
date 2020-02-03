@@ -6,6 +6,7 @@
 #include <ctime>
 #include <iomanip>
 #include <array>
+#include <stack>
 #include <QString>
 #include <QDateTime>
 
@@ -15,9 +16,12 @@ public:
     enum LogLevel
     {
         Info,
-        Debug
+        WorkFlow,
+        Debug,
+        Trace
     };
 private:
+    std::stack<LogLevel> logLevels;
     static auto tm()
     {
         return std::chrono::system_clock::now();
@@ -41,13 +45,13 @@ public:
     void percent(const size_t cur,const size_t total);
     Lout();    
     bool canMessage() const;
-    void setMsgLevel(const LogLevel lvl);
+    void pushMsgLevel(const LogLevel lvl);
+    void popMsgLevel();
 };
 
 Lout& operator << (Lout& out, const Lout::LogLevel lvl);
 Lout& operator << (Lout& out, const std::string& in);
 Lout& operator << (Lout& out, const QString& str);
-//Lout& operator << (Lout& out, std::ostream& (*func)(std::ostream&));
 Lout& operator << (Lout& out, Lout& (*func)(Lout&));
 Lout& operator << (Lout& out, const char* rhs);
 Lout& operator << (Lout& out, const size_t rhs);
@@ -59,6 +63,7 @@ Lout &flush(Lout& out);
 Lout &ok(Lout& out);
 Lout &fail(Lout& out);
 Lout &newLine(Lout& out);
+Lout &pop(Lout& out);
 
 extern Lout lout;
 

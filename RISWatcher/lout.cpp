@@ -1,6 +1,7 @@
 #include "lout.h"
 #include <sstream>
 #include <iomanip>
+#include "QObject"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -55,7 +56,6 @@ Lout& operator <<(Lout &out, const std::string &in)
             cout << outS;
             return out << flush;
         }
-
         cout << in.substr(j,i-j);
         out << newLine;
     }    
@@ -104,11 +104,11 @@ Lout& Lout::brackets(const string &str)
         {
             cout << std::left << std::setfill(' ') << std::setw(getWidth() - lastX) <<  ' ';
         }
-        cout << right<< '['<< setfill(' ')<<setw(half)<<right;
+        cout << right << '['<< setfill(' ') << setw(half) << right;
         std::operator<<(cout,strHalfL);
-        cout<<setw(half)<<left;
+        cout << setw(half) << left;
         std::operator<<(cout,strHalfR);
-        cout<<']'<<flush;
+        cout << ']' << flush;
 
         resetX();
     }
@@ -123,17 +123,19 @@ void Lout::tick()
 
 void Lout::percent(const size_t cur, const size_t total)
 {
-
-    const size_t percent = 100 * cur / total;
-    stringstream str;
-    str<< *curTick<<' '<<setw(3)<<percent<<'%';
-    brackets(str.str());
-    nextTick();
+    if(canMessage())
+    {
+        const size_t percent = 100 * cur / total;
+        stringstream str;
+        str << *curTick << ' ' << setw(3) << percent << '%';
+        brackets(str.str());
+        nextTick();
+    }
 }
 
 Lout::Lout():fmt("dd.MM.yyyy hh:mm:ss.zzz"),width(fmt.size()+1+brWidth+8)
 {
-    *this <<"width is " << getWidth() << "\n";
+    *this << Trace << "width is " << getWidth() << '\n' << pop;
 }
 
 bool Lout::canMessage() const
@@ -141,20 +143,36 @@ bool Lout::canMessage() const
     return msgLevel <= outLevel;
 }
 
-void Lout::setMsgLevel(const Lout::LogLevel lvl)
+void Lout::popMsgLevel()
 {
+    if(logLevels.empty())
+    {
+        pushMsgLevel(Info);
+        *this << endl
+              << anounce
+              << QObject::tr("Wrong message stack balance!")
+              << fail;
+        exit(-1);
+    }
+    msgLevel=logLevels.top();
+    logLevels.pop();
+}
+
+void Lout::pushMsgLevel(const Lout::LogLevel lvl)
+{
+    logLevels.push(msgLevel);
     msgLevel=lvl;
 }
 
 Lout &operator <<(Lout &out, const Lout::LogLevel lvl)
-{
-    out.setMsgLevel(lvl);
+{    
+    out.pushMsgLevel(lvl);
     return out;
 }
 
 Lout &operator <<(Lout &out, const char *rhs)
 {
-    return out<<string(rhs);
+    return out << string(rhs);
 }
 
 
@@ -189,7 +207,7 @@ Lout &operator <<(Lout &out, const char rhs)
 }
 
 Lout &endl(Lout &out)
-{
+{    
     if(out.canMessage())
     {
         cout << endl;
@@ -209,24 +227,36 @@ Lout &flush(Lout &out)
 
 Lout &ok(Lout &out)
 {
-    out.brackets("OK");
-    cout << '\n';
+    if(out.canMessage())
+    {
+        out.brackets("OK");
+        cout << '\n';
+    }
     return out;
 }
 
 Lout &fail(Lout &out)
 {
-    out.brackets("FAIL");
-    cout << '\n';
+    if(out.canMessage())
+    {
+        out.brackets("FAIL");
+        cout << '\n';
+    }
     return out;
 }
 
 Lout &newLine(Lout &out)
-{
+{    
     if(out.canMessage())
     {
         out.resetX();
         cout << '\n' << std::right << std::setfill(' ') << std::setw(out.fmt.size()+7)<<' ';
     }
+    return out;
+}
+
+Lout &pop(Lout &out)
+{
+    lout.popMsgLevel();
     return out;
 }
