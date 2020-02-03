@@ -32,36 +32,33 @@ public:
     void shift(size_t count);
     void resetX();
     void newLine();
-    size_t getLastX()
-    {
-        return lastX;
-    }
+    size_t getLastX() const;
     size_t getWidth();
     const QLatin1String fmt;
     const size_t width;
-    static constexpr size_t brWidth=6;
-    template<typename T> std::ostream& operator << (const T& rhs)
-    {
-        std::cout  << '[';
-        return std::operator <<(std::cout,QDateTime::currentDateTime().toString(fmt).toStdString()) << "]     " << rhs;
-    }
-    void anounse(const std::string& msg);
-    void anounse(const QString& msg);
+    static constexpr size_t brWidth=6;        
     void brackets(const std::string& str=std::string());
     void ok();
     void fail();
     void tick();
     void percent(const size_t cur,const size_t total);
-    Lout();
-    Lout& operator <<(const Lout::LogLevel lvl)
-    {
-        msgLevel=lvl;
-        return *this;
-    }
+    Lout();    
+    bool canMessage() const;
+    void setMsgLevel(const LogLevel lvl);
 };
 
-std::ostream& operator << (std::ostream& out,const std::string& in);
-std::ostream& operator << (std::ostream& out,const QString& str);
+Lout& operator << (Lout& out, const Lout::LogLevel lvl);
+Lout& operator << (Lout& out, const std::string& in);
+Lout& operator << (Lout& out, const QString& str);
+//Lout& operator << (Lout& out, std::ostream& (*func)(std::ostream&));
+Lout& operator << (Lout& out, Lout& (*func)(Lout&));
+Lout& operator << (Lout& out, const char* rhs);
+Lout& operator << (Lout& out, const size_t rhs);
+Lout& operator << (Lout& out, const char rhs);
+
+Lout &anounce(Lout &ret);
+Lout &endl(Lout &ret);
+Lout &flush(Lout& out);
 
 extern Lout lout;
 
