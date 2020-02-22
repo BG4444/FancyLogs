@@ -56,6 +56,7 @@ Lout& operator << (Lout& out, Lout& (*func)(Lout&));
 Lout& operator << (Lout& out, const char* rhs);
 Lout& operator << (Lout& out, const size_t rhs);
 Lout& operator << (Lout& out, const char rhs);
+Lout& operator << (Lout& out, const int rhs);
 
 Lout &anounce(Lout &ret);
 Lout &endl(Lout &ret);

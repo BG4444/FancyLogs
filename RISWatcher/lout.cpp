@@ -260,3 +260,8 @@ Lout &pop(Lout &out)
     lout.popMsgLevel();
     return out;
 }
+
+Lout &operator <<(Lout &out, const int rhs)
+{
+     return out << to_string(rhs);
+}
