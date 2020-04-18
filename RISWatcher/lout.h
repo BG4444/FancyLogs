@@ -31,7 +31,7 @@ private:
     void nextTick();        
     size_t lastX=0;
     LogLevel msgLevel=Info;
-    LogLevel outLevel=Info;
+    LogLevel outLevel=Trace;
 public:   
     void shift(size_t count);
     void resetX();
