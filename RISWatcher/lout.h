@@ -18,7 +18,8 @@ public:
         Info,
         WorkFlow,
         Debug,
-        Trace
+        Trace,
+        DeepTrace
     };
 private:
     std::stack<LogLevel> logLevels;
