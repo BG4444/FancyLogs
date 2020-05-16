@@ -61,6 +61,11 @@ Lout& operator <<(Lout &out, const std::string &in)
     }    
 }
 
+auto Lout::tm()
+{
+    return std::chrono::system_clock::now();
+}
+
 void Lout::nextTick()
 {
     if(canMessage())
@@ -156,6 +161,11 @@ void Lout::popMsgLevel()
     }
     msgLevel=logLevels.top();
     logLevels.pop();
+}
+
+void Lout::setOutLevel(const Lout::LogLevel outLevel)
+{
+    this->outLevel=outLevel;
 }
 
 void Lout::pushMsgLevel(const Lout::LogLevel lvl)

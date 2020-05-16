@@ -1,4 +1,4 @@
-﻿#ifndef LOUT_H
+#ifndef LOUT_H
 #define LOUT_H
 
 #include <iostream>
@@ -23,10 +23,7 @@ public:
     };
 private:
     std::stack<LogLevel> logLevels;
-    static auto tm()
-    {
-        return std::chrono::system_clock::now();
-    }
+    static auto tm();
     constexpr static std::array<char,4> tickChars{'|','/','-','\\'};
     std::array<char,4>::const_iterator curTick=tickChars.cbegin();
     void nextTick();        
@@ -48,6 +45,7 @@ public:
     bool canMessage() const;
     void pushMsgLevel(const LogLevel lvl);
     void popMsgLevel();
+    void setOutLevel(const LogLevel outLevel);
 };
 
 Lout& operator << (Lout& out, const Lout::LogLevel lvl);
