@@ -58,7 +58,7 @@ Lout& operator <<(Lout &out, const std::string &in)
         }
         cout << in.substr(j,i-j);
         out << newLine;
-    }    
+    }
     out.noBr();
 }
 
@@ -107,10 +107,10 @@ Lout& Lout::brackets(const string &str, const bool needReturn )
 
         constexpr size_t half=brWidth/2;
 
-        if(getWidth() - lastX.top())
-        {
-            cout << std::left << std::setfill(' ') << std::setw(getWidth() - lastX.top()) <<  ' ';
-        }
+        const auto countOfindention = getWidth() - lastX.top();
+
+        indent(countOfindention, ' ', ' ');
+
         cout << right << '['<< setfill(' ') << setw(half) << right;
         std::operator<<(cout,strHalfL);
         cout << setw(half) << left;
@@ -120,7 +120,8 @@ Lout& Lout::brackets(const string &str, const bool needReturn )
         if(lastX.size()>1)
         {
             lastX.pop();
-            cout << std::right << std::setfill(' ') << std::setw( lastX.top() +fmt.size()+7) <<' ';
+            indent(lastX.size()*4, ' ', '/');
+            cout << '\n';
         }
         else
         {
@@ -131,6 +132,7 @@ Lout& Lout::brackets(const string &str, const bool needReturn )
             }
         }
         lastWasBrackets = true;
+        hasAnounce=false;
     }
     return *this;
 }
@@ -187,30 +189,49 @@ void Lout::setOutLevel(const Lout::LogLevel outLevel)
 void Lout::noBr()
 {
     lastWasBrackets = false;
+    hasAnounce = false;
 }
 
-void Lout::indent(const size_t cnt, const char chr)
+void Lout::indent(const size_t cnt, const char inner, const char chr)
 {
-    cout << string(cnt-1, ' ') << chr
-         << '\n' << string(cnt,   ' ');
+    if(cnt)
+    {
+        cout << std::right << std::setfill(inner) << std::setw(cnt) <<  chr;
+    }
+}
+
+void Lout::newLine()
+{
+    if(canMessage())
+    {
+        resetX();
+        cout << '\n';
+        indent(fmt.size()+7,' ', ' ');
+        noBr();
+    }
 }
 
 void Lout::doAnounce()
 {
     if(canMessage())
     {
+
         if(!lastWasBrackets)
         {
             const auto cnt=lastX.size()*4;
             lastX.push(cnt);
             cout << '\n';
-            indent(cnt, '\\');
+            indent(cnt, ' ', '\\');
+            cout << '\n';
+            indent(cnt,' ', ' ');
         }
+
 
         cout << '['
              << QDateTime::currentDateTime().toString(fmt).toStdString()
              << "]     ";
-        noBr();
+        lastWasBrackets = false;
+        hasAnounce = true;
     }
 }
 
@@ -296,12 +317,7 @@ Lout &fail(Lout &out)
 
 Lout &newLine(Lout &out)
 {    
-    if(out.canMessage())
-    {
-        out.resetX();
-        cout << '\n' << std::right << std::setfill(' ') << std::setw(out.fmt.size()+7)<<' ';
-        out.noBr();
-    }
+    out.newLine();
     return out;
 }
 

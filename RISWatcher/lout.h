@@ -31,7 +31,8 @@ private:
     LogLevel msgLevel=Info;
     LogLevel outLevel=Info;
     bool lastWasBrackets = true;
-    void indent(const size_t cnt, const char chr);
+    bool hasAnounce = false;
+    void indent(const size_t cnt, const char inner, const char chr);
 public:
     void newLine();
     void shift(size_t count);
@@ -51,6 +52,7 @@ public:
     void setOutLevel(const LogLevel outLevel);
     void noBr();
     void doAnounce();
+    void print(const std::string& in);
 };
 
 Lout& operator << (Lout& out, const Lout::LogLevel lvl);
