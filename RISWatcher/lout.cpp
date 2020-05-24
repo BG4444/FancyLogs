@@ -36,30 +36,8 @@ Lout& operator <<(Lout &out, const QString &str)
 
 Lout& operator <<(Lout &out, const std::string &in)
 {
-    if(!out.canMessage())
-    {
-        return out;
-    }
-    const size_t width=out.getWidth();  //width of text area
-    for(size_t i=0;;)
-    {
-        const size_t j=i;
-        const auto oldX = out.getLastX();
-        const auto add=width - oldX;
-        const auto len = in.size();
-        i+= add;
-
-        if(i>=len)
-        {
-            const auto outS=in.substr(j);
-            out.shift(outS.size());
-            cout << outS;
-            return out << flush;
-        }
-        cout << in.substr(j,i-j);
-        out << newLine;
-    }
-    out.noBr();
+    out.print(in);
+    return out;
 }
 
 auto Lout::tm()
@@ -107,6 +85,11 @@ Lout& Lout::brackets(const string &str, const bool needReturn )
 
         constexpr size_t half=brWidth/2;
 
+        if(lastWasBrackets)
+        {
+            indentLineStart();
+        }
+
         const auto countOfindention = getWidth() - lastX.top();
 
         indent(countOfindention, ' ', ' ');
@@ -121,6 +104,7 @@ Lout& Lout::brackets(const string &str, const bool needReturn )
         {
             lastX.pop();
             indent(lastX.size()*4, ' ', '/');
+
             cout << '\n';
         }
         else
@@ -132,7 +116,7 @@ Lout& Lout::brackets(const string &str, const bool needReturn )
             }
         }
         lastWasBrackets = true;
-        hasAnounce=false;
+        hasAnounce = false;
     }
     return *this;
 }
@@ -200,14 +184,20 @@ void Lout::indent(const size_t cnt, const char inner, const char chr)
     }
 }
 
+void Lout::indentLineStart()
+{
+   indent(fmt.size()+7+getLastX()+(lastX.size()-1)*4,' ', ' ');
+}
+
 void Lout::newLine()
 {
     if(canMessage())
     {
         resetX();
         cout << '\n';
-        indent(fmt.size()+7,' ', ' ');
-        noBr();
+        indentLineStart();
+        hasAnounce = true;
+        lastWasBrackets = false;
     }
 }
 
@@ -215,8 +205,11 @@ void Lout::doAnounce()
 {
     if(canMessage())
     {
-
-        if(!lastWasBrackets)
+        if(lastWasBrackets)
+        {
+            resetX();
+        }
+        else
         {
             const auto cnt=lastX.size()*4;
             lastX.push(cnt);
@@ -232,6 +225,47 @@ void Lout::doAnounce()
              << "]     ";
         lastWasBrackets = false;
         hasAnounce = true;
+    }
+}
+
+void Lout::preIndent()
+{
+    if(!hasAnounce && lastWasBrackets)
+    {
+        indentLineStart();
+    }
+}
+
+void Lout::print(const string &in)
+{
+    if(canMessage())
+    {
+        const size_t width=getWidth();  //width of text area
+
+        preIndent();
+
+        noBr();
+
+        for(size_t i=0;;)
+        {
+            const size_t j=i;
+            const auto oldX = getLastX();
+            const auto add=width - oldX;
+            const auto len = in.size();
+            i+= add;
+
+            if(i>=len)
+            {
+                const auto outS=in.substr(j);
+                shift(outS.size());
+                cout << outS;
+                *this << flush;
+                return;
+            }
+            cout << in.substr(j,i-j) << '\n';
+            resetX();
+            indentLineStart();
+        }
     }
 }
 
@@ -269,14 +303,14 @@ Lout &operator <<(Lout &out, Lout &(*func)(Lout &))
     return func(out);
 }
 
-//Lout &operator <<(Lout &out, const char rhs)
-//{
-//    if(out.canMessage())
-//    {
-//        cout << rhs;
-//    }
-//    return out;
-//}
+Lout &operator <<(Lout &out, const char rhs)
+{
+    if(out.canMessage())
+    {
+        cout << string(1, rhs);
+    }
+    return out;
+}
 
 Lout &endl(Lout &out)
 {    

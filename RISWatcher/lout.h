@@ -33,6 +33,10 @@ private:
     bool lastWasBrackets = true;
     bool hasAnounce = false;
     void indent(const size_t cnt, const char inner, const char chr);
+    void indentLineStart();
+    void noBr();
+    void preIndent();
+
 public:
     void newLine();
     void shift(size_t count);
@@ -49,8 +53,7 @@ public:
     bool canMessage() const;
     void pushMsgLevel(const LogLevel lvl);
     void popMsgLevel();
-    void setOutLevel(const LogLevel outLevel);
-    void noBr();
+    void setOutLevel(const LogLevel outLevel);    
     void doAnounce();
     void print(const std::string& in);
 };
@@ -61,7 +64,7 @@ Lout& operator << (Lout& out, const QString& str);
 Lout& operator << (Lout& out, Lout& (*func)(Lout&));
 Lout& operator << (Lout& out, const char* rhs);
 Lout& operator << (Lout& out, const size_t rhs);
-//Lout& operator << (Lout& out, const char rhs);
+Lout& operator << (Lout& out, const char rhs);
 Lout& operator << (Lout& out, const int rhs);
 
 Lout &anounce(Lout &ret);
