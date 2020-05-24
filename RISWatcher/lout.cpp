@@ -97,7 +97,6 @@ size_t Lout::getLastX() const
     return lastX.top();
 }
 
-
 Lout& Lout::brackets(const string &str, const bool needReturn )
 {
     if(canMessage())
@@ -121,9 +120,7 @@ Lout& Lout::brackets(const string &str, const bool needReturn )
         if(lastX.size()>1)
         {
             lastX.pop();
-            indent(lastX.size()*4,'/');
-            cout << '\n';
-            indent(lastX.top()*4 +fmt.size()+7,' ');
+            cout << std::right << std::setfill(' ') << std::setw( lastX.top() +fmt.size()+7) <<' ';
         }
         else
         {
@@ -194,17 +191,8 @@ void Lout::noBr()
 
 void Lout::indent(const size_t cnt, const char chr)
 {
-    cout << std::right << std::setfill(' ') << std::setw( cnt ) << chr;
-}
-
-void Lout::newLine()
-{
-    if(canMessage())
-    {
-        resetX();
-        indent(fmt.size()+7,' ');
-        noBr();
-    }
+    cout << string(cnt-1, ' ') << chr
+         << '\n' << string(cnt,   ' ');
 }
 
 void Lout::doAnounce()
@@ -217,8 +205,6 @@ void Lout::doAnounce()
             lastX.push(cnt);
             cout << '\n';
             indent(cnt, '\\');
-            cout << '\n';
-            indent(cnt, ' ');
         }
 
         cout << '['
@@ -310,7 +296,12 @@ Lout &fail(Lout &out)
 
 Lout &newLine(Lout &out)
 {    
-    out.newLine();
+    if(out.canMessage())
+    {
+        out.resetX();
+        cout << '\n' << std::right << std::setfill(' ') << std::setw(out.fmt.size()+7)<<' ';
+        out.noBr();
+    }
     return out;
 }
 
