@@ -104,7 +104,6 @@ Lout& Lout::brackets(const string &str, const bool needReturn )
         {
             lastX.pop();
             indent(lastX.size()*4, ' ', '/');
-
             cout << '\n';
         }
         else
@@ -186,7 +185,7 @@ void Lout::indent(const size_t cnt, const char inner, const char chr)
 
 void Lout::indentLineStart()
 {
-   indent(fmt.size()+7+getLastX()+(lastX.size()-1)*4,' ', ' ');
+   indent(fmt.size()+7+getLastX(),' ', ' ');
 }
 
 void Lout::newLine()
