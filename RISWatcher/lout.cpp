@@ -3,26 +3,58 @@
 #include <iomanip>
 #include <QObject>
 
+using namespace std;
+
 #ifdef _WIN32
 #include <windows.h>
+
     size_t Lout::getWidth()
     {
         CONSOLE_SCREEN_BUFFER_INFO nfo;
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),&nfo);
         return nfo.srWindow.Right-nfo.srWindow.Left-width;
     }
+
+    Lout &Color(Lout &out, const int color)
+    {
+        return out;
+    }
+
+    Lout &noColor(Lout &out)
+    {
+        return out;
+    }
+
 #else
 #include <sys/ioctl.h> //ioctl() and TIOCGWINSZ
 #include <unistd.h> // for STDOUT_FILENO
+
     size_t Lout::getWidth()
     {
         struct winsize size;
         ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
         return size.ws_col-width;
     }
-#endif
 
-using namespace std;
+    Lout &Color(Lout &out, const int color)
+    {
+        if(out.canMessage())
+        {
+            cout << "\033[1;" << color << 'm';
+        }
+        return out;
+    }
+
+    Lout &noColor(Lout &out)
+    {
+        if(out.canMessage())
+        {
+            cout << "\033[0m";
+        }
+        return out;
+    }
+
+#endif
 
 Lout lout;
 
@@ -55,7 +87,7 @@ void Lout::nextTick()
         }
         resetX();
         shift(getWidth());
-        cout << setw(brWidth+2) << setfill('\b') << '\b';
+        indent(brWidth+1,'\b','\b');
         noBr();
     }
 }
@@ -377,24 +409,6 @@ Lout &pop(Lout &out)
 Lout &operator <<(Lout &out, const int rhs)
 {
      return out << to_string(rhs);
-}
-
-Lout &Color(Lout &out, const int color)
-{
-    if(out.canMessage())
-    {
-        cout << "\033[1;" << color << 'm';
-    }
-    return out;
-}
-
-Lout &noColor(Lout &out)
-{
-    if(out.canMessage())
-    {
-        cout << "\033[0m";
-    }
-    return out;
 }
 
 Lout &operator <<(Lout &out, std::function<Lout &(Lout &)> &&func)
