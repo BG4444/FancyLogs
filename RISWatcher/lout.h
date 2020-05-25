@@ -9,6 +9,8 @@
 #include <stack>
 #include <QString>
 #include <QDateTime>
+#include <functional>
+
 
 class Lout
 {
@@ -36,8 +38,7 @@ private:
     void indentLineStart();
     void noBr();
     void preIndent();
-
-    void printBrackets(const std::string &str);
+    void printBrackets(const std::string &str, const int color);
 
 public:
     void newLine();
@@ -48,7 +49,7 @@ public:
     const QLatin1String fmt;
     const size_t width;
     static constexpr size_t brWidth=6;        
-    Lout &brackets(const std::string& str=std::string());
+    Lout &brackets(const std::string& str, const int color);
     void tick();
     void percent(const size_t cur,const size_t total);
     Lout();    
@@ -64,6 +65,7 @@ Lout& operator << (Lout& out, const Lout::LogLevel lvl);
 Lout& operator << (Lout& out, const std::string& in);
 Lout& operator << (Lout& out, const QString& str);
 Lout& operator << (Lout& out, Lout& (*func)(Lout&));
+Lout& operator << (Lout& out, std::function<Lout& (Lout&)>&&func);
 Lout& operator << (Lout& out, const char* rhs);
 Lout& operator << (Lout& out, const size_t rhs);
 Lout& operator << (Lout& out, const char rhs);
@@ -76,6 +78,8 @@ Lout &ok(Lout& out);
 Lout &fail(Lout& out);
 Lout &newLine(Lout& out);
 Lout &pop(Lout& out);
+Lout &Color(Lout& out, const int);
+Lout &noColor(Lout& out);
 
 extern Lout lout;
 

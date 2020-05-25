@@ -1,7 +1,7 @@
 #include "lout.h"
 #include <sstream>
 #include <iomanip>
-#include "QObject"
+#include <QObject>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -75,20 +75,22 @@ size_t Lout::getLastX() const
     return lastX.top();
 }
 
-void Lout::printBrackets(const string& str)
+void Lout::printBrackets(const string& str, const int color)
 {
     const auto midpos=str.length()/2;
     const auto strHalfL=str.substr(0,midpos);
     const auto strHalfR=str.substr(midpos);
     constexpr size_t half=brWidth/2;
+    *this << bind(Color, placeholders::_1, color);
     cout << right << '['<< setfill(' ') << setw(half) << right;
     std::operator<<(cout,strHalfL);
     cout << setw(half) << left;
     std::operator<<(cout,strHalfR);
-    cout << ']' << flush;
+    cout << ']';
+    *this<<noColor << flush;
 }
 
-Lout& Lout::brackets(const string &str )
+Lout& Lout::brackets(const string &str, const int color )
 {
     if(canMessage())
     {
@@ -100,7 +102,7 @@ Lout& Lout::brackets(const string &str )
         {
             const auto countOfindention = getWidth() - lastX.top();
             indent(countOfindention, ' ', ' ');
-            printBrackets(str);
+            printBrackets(str, color);
         }
 
         if(lastX.size()>1)
@@ -114,7 +116,7 @@ Lout& Lout::brackets(const string &str )
             {
                 const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
                 indent(countOfindention, ' ', ' ');
-                printBrackets(str);
+                printBrackets(str, color);
             }
         }
         else
@@ -129,7 +131,7 @@ Lout& Lout::brackets(const string &str )
 
 void Lout::tick()
 {    
-    brackets(std::string(curTick,1));
+    brackets(std::string(curTick,1), 33);
     nextTick();
 }
 
@@ -140,7 +142,7 @@ void Lout::percent(const size_t cur, const size_t total)
         const size_t percent = 100 * cur / total;
         stringstream str;
         str << *curTick << ' ' << setw(3) << percent << '%';
-        brackets(str.str());
+        brackets(str.str(),33);
         nextTick();
     }
 }
@@ -238,7 +240,7 @@ void Lout::doAnounce()
 
         cout << '['
              <<  QDateTime::currentDateTime().toString(fmt).toStdString()
-             << "]     ";
+             << "]\033[0m     ";
         lastWasBrackets = false;
         hasAnounce = true;
     }
@@ -288,7 +290,7 @@ void Lout::print(const string &in)
 void Lout::pushMsgLevel(const Lout::LogLevel lvl)
 {
     logLevels.push(msgLevel);
-    msgLevel=lvl;
+    msgLevel=lvl;    
 }
 
 Lout &operator <<(Lout &out, const Lout::LogLevel lvl)
@@ -348,14 +350,14 @@ Lout &flush(Lout &out)
 }
 
 Lout &ok(Lout &out)
-{
-    out.brackets("OK");
+{    
+    out.brackets("OK",32);
     return out;
 }
 
 Lout &fail(Lout &out)
 {
-    out.brackets("FAIL");
+    out.brackets("FAIL",31);
     return out;
 }
 
@@ -374,4 +376,27 @@ Lout &pop(Lout &out)
 Lout &operator <<(Lout &out, const int rhs)
 {
      return out << to_string(rhs);
+}
+
+Lout &Color(Lout &out, const int color)
+{
+    if(out.canMessage())
+    {
+        cout << "\033[1;" << color << 'm';
+    }
+    return out;
+}
+
+Lout &noColor(Lout &out)
+{
+    if(out.canMessage())
+    {
+        cout << "\033[0m";
+    }
+    return out;
+}
+
+Lout &operator <<(Lout &out, std::function<Lout &(Lout &)> &&func)
+{
+    return func(out);
 }
