@@ -67,7 +67,7 @@ void Lout::shift(size_t count)
 
 void Lout::resetX()
 {
-    lastX.top()=4 * (lastX.size()-1);
+    lastX.top()=0;
 }
 
 size_t Lout::getLastX() const
@@ -75,44 +75,51 @@ size_t Lout::getLastX() const
     return lastX.top();
 }
 
-Lout& Lout::brackets(const string &str, const bool needReturn )
+void Lout::printBrackets(const string& str)
+{
+    const auto midpos=str.length()/2;
+    const auto strHalfL=str.substr(0,midpos);
+    const auto strHalfR=str.substr(midpos);
+    constexpr size_t half=brWidth/2;
+    cout << right << '['<< setfill(' ') << setw(half) << right;
+    std::operator<<(cout,strHalfL);
+    cout << setw(half) << left;
+    std::operator<<(cout,strHalfR);
+    cout << ']' << flush;
+}
+
+Lout& Lout::brackets(const string &str )
 {
     if(canMessage())
     {
-        const auto midpos=str.length()/2;
-        const auto strHalfL=str.substr(0,midpos);
-        const auto strHalfR=str.substr(midpos);
-
-        constexpr size_t half=brWidth/2;
-
         if(lastWasBrackets)
         {
-            indentLineStart();
-        }
-
-        const auto countOfindention = getWidth() - lastX.top();
-
-        indent(countOfindention, ' ', ' ');
-
-        cout << right << '['<< setfill(' ') << setw(half) << right;
-        std::operator<<(cout,strHalfL);
-        cout << setw(half) << left;
-        std::operator<<(cout,strHalfR);
-        cout << ']' << flush;
-
-        if(lastX.size()>1)
-        {
-            lastX.pop();
-            indent(lastX.size()*4, ' ', '/');
             cout << '\n';
         }
         else
         {
-            resetX();
-            if(needReturn)
+            const auto countOfindention = getWidth() - lastX.top();
+            indent(countOfindention, ' ', ' ');
+            printBrackets(str);
+        }
+
+        if(lastX.size()>1)
+        {
+            lastX.pop();
+
+            indent((lastX.size()-1)*4, ' ', ' ');
+            indent(4, '_', '/');
+
+            if(lastWasBrackets)
             {
-                cout << '\n';
+                const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
+                indent(countOfindention, ' ', ' ');
+                printBrackets(str);
             }
+        }
+        else
+        {
+            resetX();
         }
         lastWasBrackets = true;
         hasAnounce = false;
@@ -204,23 +211,33 @@ void Lout::doAnounce()
 {
     if(canMessage())
     {
+        cout << '\n';
         if(lastWasBrackets)
         {
+
             resetX();
         }
         else
         {
-            const auto cnt=lastX.size()*4;
+            const auto old = lastX.size();
+            const auto cnt = old*4;
             lastX.push(cnt);
+
+            indent((old-1)*4, ' ', ' ');
+
+            cout << '\\';
+            indent(3, '_', ' ');
+
             cout << '\n';
             indent(cnt, ' ', '\\');
+
             cout << '\n';
             indent(cnt,' ', ' ');
         }
 
 
         cout << '['
-             << QDateTime::currentDateTime().toString(fmt).toStdString()
+             <<  QDateTime::currentDateTime().toString(fmt).toStdString()
              << "]     ";
         lastWasBrackets = false;
         hasAnounce = true;
@@ -332,19 +349,13 @@ Lout &flush(Lout &out)
 
 Lout &ok(Lout &out)
 {
-    if(out.canMessage())
-    {
-        out.brackets("OK",true);
-    }
+    out.brackets("OK");
     return out;
 }
 
 Lout &fail(Lout &out)
 {
-    if(out.canMessage())
-    {
-        out.brackets("FAIL",true);
-    }
+    out.brackets("FAIL");
     return out;
 }
 

@@ -37,6 +37,8 @@ private:
     void noBr();
     void preIndent();
 
+    void printBrackets(const std::string &str);
+
 public:
     void newLine();
     void shift(size_t count);
@@ -46,7 +48,7 @@ public:
     const QLatin1String fmt;
     const size_t width;
     static constexpr size_t brWidth=6;        
-    Lout &brackets(const std::string& str=std::string(), const bool needReturn=false);
+    Lout &brackets(const std::string& str=std::string());
     void tick();
     void percent(const size_t cur,const size_t total);
     Lout();    
