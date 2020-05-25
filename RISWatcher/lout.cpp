@@ -112,6 +112,8 @@ Lout& Lout::brackets(const string &str, const int color )
             indent((lastX.size()-1)*4, ' ', ' ');
             indent(4, '_', '/');
 
+            shift(-lastX.size()*4);
+
             if(lastWasBrackets)
             {
                 const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
@@ -214,10 +216,9 @@ void Lout::doAnounce()
     if(canMessage())
     {
         cout << '\n';
-        if(lastWasBrackets)
+        if(lastWasBrackets && !getLastX())
         {
 
-            resetX();
         }
         else
         {
