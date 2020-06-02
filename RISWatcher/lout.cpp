@@ -1,64 +1,75 @@
 #include "lout.h"
 #include <sstream>
 #include <iomanip>
-#include "QObject"
+#include <QObject>
+
+using namespace std;
 
 #ifdef _WIN32
 #include <windows.h>
+
     size_t Lout::getWidth()
     {
         CONSOLE_SCREEN_BUFFER_INFO nfo;
         GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),&nfo);
         return nfo.srWindow.Right-nfo.srWindow.Left-width;
     }
+
+    Lout &Color(Lout &out, const int color)
+    {
+        return out;
+    }
+
+    Lout &noColor(Lout &out)
+    {
+        return out;
+    }
+
 #else
 #include <sys/ioctl.h> //ioctl() and TIOCGWINSZ
 #include <unistd.h> // for STDOUT_FILENO
+
     size_t Lout::getWidth()
     {
         struct winsize size;
         ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
         return size.ws_col-width;
     }
-#endif
 
-using namespace std;
+    Lout &Color(Lout &out, const int color)
+    {
+        if(out.canMessage())
+        {
+            cout << "\033[1;" << color << 'm';
+        }
+        return out;
+    }
+
+    Lout &noColor(Lout &out)
+    {
+        if(out.canMessage())
+        {
+            cout << "\033[0m";
+        }
+        return out;
+    }
+
+#endif
 
 Lout lout;
 
 constexpr std::array<char,4> Lout::tickChars;
 
 Lout& operator <<(Lout &out, const QString &str)
-{
+{    
     const auto txt = str.toUtf8().toStdString();
     return out << txt;
 }
 
 Lout& operator <<(Lout &out, const std::string &in)
 {
-    if(!out.canMessage())
-    {
-        return out;
-    }
-    const size_t width=out.getWidth();  //width of text area
-    for(size_t i=0;;)
-    {
-        const size_t j=i;
-        const auto oldX = out.getLastX();
-        const auto add=width - oldX;
-        const auto len = in.size();
-        i+= add;
-
-        if(i>=len)
-        {
-            const auto outS=in.substr(j);
-            out.shift(outS.size());
-            cout << outS;
-            return out << flush;
-        }
-        cout << in.substr(j,i-j);
-        out << newLine;
-    }    
+    out.print(in);
+    return out;
 }
 
 auto Lout::tm()
@@ -76,53 +87,85 @@ void Lout::nextTick()
         }
         resetX();
         shift(getWidth());
-        cout << setw(brWidth+2) << setfill('\b') << '\b';
+        indent(brWidth+1,'\b','\b');
+        noBr();
     }
 }
 
 void Lout::shift(size_t count)
 {
-    lastX+=count;
+    lastX.top()+=count;
 }
 
 void Lout::resetX()
 {
-    lastX=0;
+    lastX.top()=0;
 }
 
 size_t Lout::getLastX() const
 {
-    return lastX;
+    return lastX.top();
 }
 
-Lout& Lout::brackets(const string &str)
+void Lout::printBrackets(const string& str, const int color)
+{
+    const auto midpos=str.length()/2;
+    const auto strHalfL=str.substr(0,midpos);
+    const auto strHalfR=str.substr(midpos);
+    constexpr size_t half=brWidth/2;
+    *this << bind(Color, placeholders::_1, color);
+    cout << right << '['<< setfill(' ') << setw(half) << right;
+    std::operator<<(cout,strHalfL);
+    cout << setw(half) << left;
+    std::operator<<(cout,strHalfR);
+    cout << ']';
+    *this<<noColor << flush;
+}
+
+Lout& Lout::brackets(const string &str, const int color )
 {
     if(canMessage())
     {
-        const auto midpos=str.length()/2;
-        const auto strHalfL=str.substr(0,midpos);
-        const auto strHalfR=str.substr(midpos);
-
-        constexpr size_t half=brWidth/2;
-
-        if(getWidth() - lastX)
+        if(lastWasBrackets)
         {
-            cout << std::left << std::setfill(' ') << std::setw(getWidth() - lastX) <<  ' ';
+            cout << '\n';
         }
-        cout << right << '['<< setfill(' ') << setw(half) << right;
-        std::operator<<(cout,strHalfL);
-        cout << setw(half) << left;
-        std::operator<<(cout,strHalfR);
-        cout << ']' << flush;
+        else
+        {
+            const auto countOfindention = getWidth() - lastX.top();
+            indent(countOfindention, ' ', ' ');
+            printBrackets(str, color);
+        }
 
-        resetX();
+        if(lastX.size()>1)
+        {
+            lastX.pop();
+
+            indent((lastX.size()-1)*4, ' ', ' ');
+            indent(4, '_', '/');
+
+            shift(-lastX.size()*4);
+
+            if(lastWasBrackets)
+            {
+                const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
+                indent(countOfindention, ' ', ' ');
+                printBrackets(str, color);
+            }
+        }
+        else
+        {
+            resetX();
+        }
+        lastWasBrackets = true;
+        hasAnounce = false;
     }
     return *this;
 }
 
 void Lout::tick()
 {    
-    brackets(std::string(curTick,1));
+    brackets(std::string(curTick,1), 33);
     nextTick();
 }
 
@@ -133,13 +176,14 @@ void Lout::percent(const size_t cur, const size_t total)
         const size_t percent = 100 * cur / total;
         stringstream str;
         str << *curTick << ' ' << setw(3) << percent << '%';
-        brackets(str.str());
+        brackets(str.str(),33);
         nextTick();
     }
 }
 
 Lout::Lout():fmt("dd.MM.yyyy hh:mm:ss.zzz"),width(fmt.size()+1+brWidth+8)
 {
+    lastX.push(0);
     *this << Trace << "width is " << getWidth() << '\n' << pop;
 }
 
@@ -168,10 +212,118 @@ void Lout::setOutLevel(const Lout::LogLevel outLevel)
     this->outLevel=outLevel;
 }
 
+void Lout::noBr()
+{
+    lastWasBrackets = false;
+    hasAnounce = false;
+}
+
+void Lout::indent(const size_t cnt, const char inner, const char chr)
+{
+    if(cnt)
+    {
+        cout << std::right << std::setfill(inner) << std::setw(cnt) <<  chr;
+    }
+}
+
+void Lout::indentLineStart()
+{
+   indent(fmt.size()+7+getLastX(),' ', ' ');
+}
+
+void Lout::newLine()
+{
+    if(canMessage())
+    {
+        resetX();
+        cout << '\n';
+        indentLineStart();
+        hasAnounce = true;
+        lastWasBrackets = false;
+    }
+}
+
+void Lout::doAnounce()
+{
+    if(canMessage())
+    {
+        cout << '\n';
+        if(lastWasBrackets && !getLastX())
+        {
+
+        }
+        else
+        {
+            const auto old = lastX.size();
+            const auto cnt = old*4;
+            lastX.push(cnt);
+
+            indent((old-1)*4, ' ', ' ');
+
+            cout << '\\';
+            indent(3, '_', ' ');
+
+            cout << '\n';
+            indent(cnt, ' ', '\\');
+
+            cout << '\n';
+            indent(cnt,' ', ' ');
+        }
+
+
+        cout << '['
+             <<  QDateTime::currentDateTime().toString(fmt).toStdString()
+             << "]\033[0m     ";
+        lastWasBrackets = false;
+        hasAnounce = true;
+    }
+}
+
+void Lout::preIndent()
+{
+    if(!hasAnounce && lastWasBrackets)
+    {
+        indentLineStart();
+    }
+}
+
+void Lout::print(const string &in)
+{
+    if(canMessage())
+    {
+        const size_t width=getWidth();  //width of text area
+
+        preIndent();
+
+        noBr();
+
+        for(size_t i=0;;)
+        {
+            const size_t j=i;
+            const auto oldX = getLastX();
+            const auto add=width - oldX;
+            const auto len = in.size();
+            i+= add;
+
+            if(i>=len)
+            {
+                const auto outS=in.substr(j);
+                shift(outS.size());
+                cout << outS;
+                *this << flush;
+                return;
+            }
+            cout << in.substr(j,i-j) << '\n';
+            resetX();
+            indentLineStart();
+        }
+    }
+}
+
 void Lout::pushMsgLevel(const Lout::LogLevel lvl)
 {
     logLevels.push(msgLevel);
-    msgLevel=lvl;
+    msgLevel=lvl;    
 }
 
 Lout &operator <<(Lout &out, const Lout::LogLevel lvl)
@@ -193,12 +345,7 @@ Lout &operator <<(Lout &out, const size_t rhs)
 
 Lout& anounce(Lout &ret)
 {
-    if(ret.canMessage())
-    {
-        cout << '['
-             << QDateTime::currentDateTime().toString(ret.fmt).toStdString()
-             << "]     ";
-    }
+    ret.doAnounce();
     return ret;
 }
 
@@ -211,7 +358,7 @@ Lout &operator <<(Lout &out, const char rhs)
 {
     if(out.canMessage())
     {
-        cout << rhs;
+        cout << string(1, rhs);
     }
     return out;
 }
@@ -236,32 +383,20 @@ Lout &flush(Lout &out)
 }
 
 Lout &ok(Lout &out)
-{
-    if(out.canMessage())
-    {
-        out.brackets("OK");
-        cout << '\n';
-    }
+{    
+    out.brackets("OK",32);
     return out;
 }
 
 Lout &fail(Lout &out)
 {
-    if(out.canMessage())
-    {
-        out.brackets("FAIL");
-        cout << '\n';
-    }
+    out.brackets("FAIL",31);
     return out;
 }
 
 Lout &newLine(Lout &out)
 {    
-    if(out.canMessage())
-    {
-        out.resetX();
-        cout << '\n' << std::right << std::setfill(' ') << std::setw(out.fmt.size()+7)<<' ';
-    }
+    out.newLine();
     return out;
 }
 
@@ -274,4 +409,9 @@ Lout &pop(Lout &out)
 Lout &operator <<(Lout &out, const int rhs)
 {
      return out << to_string(rhs);
+}
+
+Lout &operator <<(Lout &out, std::function<Lout &(Lout &)> &&func)
+{
+    return func(out);
 }
