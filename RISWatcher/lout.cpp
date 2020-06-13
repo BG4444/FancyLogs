@@ -415,3 +415,8 @@ Lout &operator <<(Lout &out, std::function<Lout &(Lout &)> &&func)
 {
     return func(out);
 }
+
+Lout &operator <<(Lout &out, const time_t rhs)
+{
+    return out << to_string(rhs);
+}
