@@ -2,6 +2,7 @@
 #include <sstream>
 #include <iomanip>
 #include <QObject>
+#include <unicode/utf8.h>
 
 using namespace std;
 
@@ -287,6 +288,41 @@ void Lout::preIndent()
     }
 }
 
+size_t strlen(const std::string& in)
+{
+    size_t ret=0;
+    const int len = in.length();
+    for(int i=0;i < len;++ret)
+    {
+        UChar32 c;
+        U8_NEXT(in.c_str(), i, len, c);
+    }
+    return ret;
+}
+
+int roll(const std::string& in, int i, size_t pos)
+{
+    const int len=in.length();
+    while(pos--)
+    {
+        UChar32 c;
+        U8_NEXT(in.c_str(), i, len, c);
+    }
+    return i;
+}
+
+string substr(const std::string& in,const size_t pos)
+{
+    return in.substr(roll(in, 0, pos));
+}
+
+string substr(const std::string& in, const size_t pos, const size_t count)
+{
+    const int beg = roll(in, 0,   pos);
+    const int  en = roll(in, beg, count);
+    return in.substr(beg, en);
+}
+
 void Lout::print(const string &in)
 {
     if(canMessage())
@@ -302,18 +338,18 @@ void Lout::print(const string &in)
             const size_t j=i;
             const auto oldX = getLastX();
             const auto add=width - oldX;
-            const auto len = in.size();
+            const auto len = strlen(in);
             i+= add;
 
             if(i>=len)
             {
-                const auto outS=in.substr(j);
-                shift(outS.size());
+                const auto& outS=substr(in, j);
+                shift(strlen(outS));
                 cout << outS;
                 *this << flush;
                 return;
             }
-            cout << in.substr(j,i-j) << '\n';
+            cout << substr(in, j, i-j) << '\n';
             resetX();
             indentLineStart();
         }
