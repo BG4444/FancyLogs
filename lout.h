@@ -4,13 +4,13 @@
 #include <iostream>
 #include <chrono>
 #include <ctime>
-#include <iomanip>
 #include <array>
 #include <stack>
 #include <QString>
 #include <QDateTime>
 #include <functional>
 #include <map>
+#include <vector>
 
 class Lout
 {
@@ -27,6 +27,7 @@ private:
     std::stack<LogLevel> logLevels;
     static auto tm();
     constexpr static std::array<char,4> tickChars{'|','/','-','\\'};
+    const std::array<std::string, 2> bars;
     std::array<char,4>::const_iterator curTick=tickChars.cbegin();
     void nextTick();        
     std::stack<size_t> lastX;
@@ -64,13 +65,13 @@ public:
     static int roll(const std::string& in, int i, size_t pos);
     static std::string substr(const std::string& in,const size_t pos);
     static std::string substr(const std::string& in, const size_t pos, const size_t count);
-
     void printW(const std::string& in, const size_t width, const std::string &filler);
+    void draw(const std::vector<std::vector<uint8_t>>& image);
+
     template<bool histMode, typename T> void printHist(const T &in)
     {
         constexpr size_t captionWidth = 8;
         constexpr size_t height = 20;
-        const static std::string bars[]={"\u2591", "\u2588"};
 
         const size_t screenW = getWidth();
         const ssize_t width = screenW - captionWidth;

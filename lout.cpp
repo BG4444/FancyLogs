@@ -3,6 +3,8 @@
 #include <iomanip>
 #include <QObject>
 #include <unicode/utf8.h>
+#include <iomanip>
+#include <cmath>
 
 using namespace std;
 
@@ -182,7 +184,9 @@ void Lout::percent(const size_t cur, const size_t total)
     }
 }
 
-Lout::Lout():fmt("dd.MM.yyyy hh:mm:ss.zzz"),width(fmt.size()+1+brWidth+8)
+Lout::Lout():fmt("dd.MM.yyyy hh:mm:ss.zzz"),
+             width(fmt.size()+1+brWidth+8),
+             bars{"\u2591", "\u2588"}
 {
     lastX.push(0);
     *this << Trace << "width is " << getWidth() << '\n' << pop;
@@ -275,6 +279,51 @@ void Lout::printW(const string &in, const size_t width, const std::string& fille
     const size_t len = min(strlen(in), width-1);
     print(substr(in, 0, len));
     flood(width - len, filler);
+}
+
+void Lout::draw(const vector<vector<uint8_t> > &image)
+{
+    if(image.empty())
+    {
+        return;
+    }
+    const auto widestLine = max_element(image.cbegin(), image.cend(), [](const vector<uint8_t>& a,
+                                                                         const vector<uint8_t>& b)
+                                                                            {
+                                                                                 return a.size() < b.size();
+                                                                            }
+                                                                        )->size();
+    if(!widestLine)
+    {
+        return;
+    }
+    const auto screenW = getWidth();
+    const auto printW = min(screenW, widestLine);
+    const auto aspect = max(1.0f, float(widestLine-1) / float(screenW-1));
+    //когда картинка шире, aspect > 1, и надо уменьшить высоту, поэтому, делим
+    const size_t printH = ceil(image.size() / aspect);
+
+    for(size_t i=0;i<printH;++i)
+    {
+        const size_t srcY = min( size_t(round (i * aspect)), image.size());
+        const auto& pos = image[srcY];
+        for(size_t j=0;j<printW;++j)
+        {
+            const size_t srcX = round (j * aspect);
+            const bool hasChar = pos.size()>srcX && pos[srcX];
+
+            if(hasChar)
+            {
+                print(string(1, pos[srcX]));
+            }
+            else
+            {
+                print(bars[0]);
+            }
+        }
+        newLine();
+    }
+    newLine();
 }
 
 void Lout::indentLineStart()
@@ -471,5 +520,3 @@ Lout &operator <<(Lout &out, const time_t rhs)
 {
     return out << to_string(rhs);
 }
-
-
