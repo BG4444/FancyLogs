@@ -235,9 +235,51 @@ void Lout::flood(size_t cnt, const string& chr)
     }
 }
 
+size_t Lout::strlen(const string &in)
+{
+    size_t ret=0;
+    const int len = in.length();
+    for(int i=0;i < len;++ret)
+    {
+        UChar32 c;
+        U8_NEXT(in.c_str(), i, len, c);
+    }
+    return ret;
+}
+
+int Lout::roll(const string &in, int i, size_t pos)
+{
+    const int len=in.length();
+    while(pos--)
+    {
+        UChar32 c;
+        U8_NEXT(in.c_str(), i, len, c);
+    }
+    return i;
+}
+
+string Lout::substr(const string &in, const size_t pos)
+{
+    return in.substr(roll(in, 0, pos));
+}
+
+string Lout::substr(const string &in, const size_t pos, const size_t count)
+{
+    const int beg = roll(in, 0,   pos);
+    const int  en = roll(in, beg, count);
+    return in.substr(beg, en);
+}
+
+void Lout::printW(const string &in, const size_t width, const std::string& filler)
+{
+    const size_t len = min(strlen(in), width-1);
+    print(substr(in, 0, len));
+    flood(width - len, filler);
+}
+
 void Lout::indentLineStart()
 {
-   indent(fmt.size()+7+getLastX(),' ', ' ');
+    indent(fmt.size()+7+getLastX(),' ', ' ');
 }
 
 void Lout::newLine()
@@ -294,41 +336,6 @@ void Lout::preIndent()
     {
         indentLineStart();
     }
-}
-
-size_t strlen(const std::string& in)
-{
-    size_t ret=0;
-    const int len = in.length();
-    for(int i=0;i < len;++ret)
-    {
-        UChar32 c;
-        U8_NEXT(in.c_str(), i, len, c);
-    }
-    return ret;
-}
-
-int roll(const std::string& in, int i, size_t pos)
-{
-    const int len=in.length();
-    while(pos--)
-    {
-        UChar32 c;
-        U8_NEXT(in.c_str(), i, len, c);
-    }
-    return i;
-}
-
-string substr(const std::string& in,const size_t pos)
-{
-    return in.substr(roll(in, 0, pos));
-}
-
-string substr(const std::string& in, const size_t pos, const size_t count)
-{
-    const int beg = roll(in, 0,   pos);
-    const int  en = roll(in, beg, count);
-    return in.substr(beg, en);
 }
 
 void Lout::print(const string &in)
@@ -465,44 +472,4 @@ Lout &operator <<(Lout &out, const time_t rhs)
     return out << to_string(rhs);
 }
 
-void Lout::printHist(const map<uint8_t, size_t> &in)
-{
-    const size_t maxV = in.empty() ? 0 : std::max_element(in.cbegin(), in.cend())->second;
-    const ssize_t M = maxV > 20 ? 20 : maxV;
 
-    static string bars[]={"\u2591", "\u2588"};
-
-    constexpr size_t captionWidth = 8;
-    const auto width = getWidth() - captionWidth;
-    const auto len = min(in.size(), width);
-    const auto start = (width - len) / 2;
-
-    for(ssize_t i=0;  i < (20 - M) * ssize_t(width); ++i)
-    {
-        lout << bars[0];
-    }
-    if(M)
-    {
-        const auto m = maxV / M;
-        for(size_t i=M; i--; )
-        {
-            const auto value = i*m;
-
-            string caption = to_string(value);
-            if(caption.size() > captionWidth-1)
-            {
-                caption.resize(captionWidth-1);
-            }
-            caption.append(captionWidth-caption.size(), ' ');
-
-            flood(start, bars[0]);
-            auto pos = in.cbegin();
-            for(size_t j = 0; j<len;++j,++pos)
-            {
-                lout << bars[pos->second >= value];
-
-            }
-            flood(width-len-start, bars[0]);
-        }
-    }
-}

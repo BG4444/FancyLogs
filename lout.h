@@ -60,7 +60,77 @@ public:
     void setOutLevel(const LogLevel outLevel);    
     void doAnounce();
     void print(const std::string& in);
-    void printHist(const std::map<uint8_t, size_t> &in);
+    static size_t strlen(const std::string& in);
+    static int roll(const std::string& in, int i, size_t pos);
+    static std::string substr(const std::string& in,const size_t pos);
+    static std::string substr(const std::string& in, const size_t pos, const size_t count);
+
+    void printW(const std::string& in, const size_t width, const std::string &filler);
+    template<bool histMode, typename T> void printHist(const T &in)
+    {
+        constexpr size_t captionWidth = 8;
+        constexpr size_t height = 20;
+        const static std::string bars[]={"\u2591", "\u2588"};
+
+        const size_t screenW = getWidth();
+        const ssize_t width = screenW - captionWidth;
+        if(width<=0)
+        {
+            return;
+        }
+
+        if(in.empty())
+        {
+            flood(height * screenW, bars[0]);
+            return;
+        }
+
+        const auto maxV = std::max_element(in.cbegin(),in.cend(),[] (const typename T::value_type& a,
+                                                                     const typename T::value_type& b)
+                                                                     {
+                                                                         return a.second < b.second;
+                                                                     }
+                                                                     )->second;
+
+        const auto minV = std::min_element(in.cbegin(),in.cend(),[] (const typename T::value_type& a,
+                                                                     const typename T::value_type& b)
+                                                                     {
+                                                                         return a.second < b.second;
+                                                                     }
+                                                                     )->second;
+        const auto ampV = maxV==minV ? 1 : maxV - minV;
+
+        const size_t M = std::min(height, size_t(ceil( ampV)));
+
+        const size_t len = std::min(in.size(), size_t(width));
+        const size_t start = (width - len) / 2;
+        const auto m = ampV / static_cast<typename T::mapped_type>(M);
+
+        for(size_t i=height; i; )
+        {
+            const auto valueH = static_cast<typename T::mapped_type>(i) * m + minV;
+            --i;
+            const auto valueL = static_cast<typename T::mapped_type>(i) * m + minV;
+            if(i & 1)
+            {
+                flood(captionWidth, " ");
+            }
+            else
+            {
+                printW(std::to_string(valueH), captionWidth, " ");
+            }
+
+            flood(start, bars[0]);
+            auto pos = in.cbegin();
+
+            for(size_t j = 0; j<len;++j,++pos)
+            {
+                print(bars[ (pos->second <= valueH || histMode) && pos->second >= valueL ]);
+            }
+
+            flood(width-len-start, bars[0]);
+        }
+    }
 };
 
 Lout& operator << (Lout& out, const Lout::LogLevel lvl);
