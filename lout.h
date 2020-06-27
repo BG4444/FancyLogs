@@ -10,7 +10,7 @@
 #include <QString>
 #include <QDateTime>
 #include <functional>
-
+#include <map>
 
 class Lout
 {
@@ -35,6 +35,7 @@ private:
     bool lastWasBrackets = true;
     bool hasAnounce = false;
     void indent(const size_t cnt, const char inner, const char chr);
+    void flood(size_t cnt, const std::string& filler);
     void indentLineStart();
     void noBr();
     void preIndent();
@@ -59,6 +60,7 @@ public:
     void setOutLevel(const LogLevel outLevel);    
     void doAnounce();
     void print(const std::string& in);
+    void printHist(const std::map<uint8_t, size_t> &in);
 };
 
 Lout& operator << (Lout& out, const Lout::LogLevel lvl);

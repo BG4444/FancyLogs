@@ -227,6 +227,14 @@ void Lout::indent(const size_t cnt, const char inner, const char chr)
     }
 }
 
+void Lout::flood(size_t cnt, const string& chr)
+{
+    while(cnt--)
+    {
+        *this << chr;
+    }
+}
+
 void Lout::indentLineStart()
 {
    indent(fmt.size()+7+getLastX(),' ', ' ');
@@ -455,4 +463,46 @@ Lout &operator <<(Lout &out, std::function<Lout &(Lout &)> &&func)
 Lout &operator <<(Lout &out, const time_t rhs)
 {
     return out << to_string(rhs);
+}
+
+void Lout::printHist(const map<uint8_t, size_t> &in)
+{
+    const size_t maxV = in.empty() ? 0 : std::max_element(in.cbegin(), in.cend())->second;
+    const ssize_t M = maxV > 20 ? 20 : maxV;
+
+    static string bars[]={"\u2591", "\u2588"};
+
+    constexpr size_t captionWidth = 8;
+    const auto width = getWidth() - captionWidth;
+    const auto len = min(in.size(), width);
+    const auto start = (width - len) / 2;
+
+    for(ssize_t i=0;  i < (20 - M) * ssize_t(width); ++i)
+    {
+        lout << bars[0];
+    }
+    if(M)
+    {
+        const auto m = maxV / M;
+        for(size_t i=M; i--; )
+        {
+            const auto value = i*m;
+
+            string caption = to_string(value);
+            if(caption.size() > captionWidth-1)
+            {
+                caption.resize(captionWidth-1);
+            }
+            caption.append(captionWidth-caption.size(), ' ');
+
+            flood(start, bars[0]);
+            auto pos = in.cbegin();
+            for(size_t j = 0; j<len;++j,++pos)
+            {
+                lout << bars[pos->second >= value];
+
+            }
+            flood(width-len-start, bars[0]);
+        }
+    }
 }
