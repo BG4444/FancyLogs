@@ -15,6 +15,42 @@
 class Lout
 {
 public:
+    class PictureElement
+    {
+        char chr=' ';
+        uint8_t color=15;
+    public:
+        PictureElement(){}
+        PictureElement(const char chr, const uint8_t color):chr(chr),color(color){}
+        PictureElement(const PictureElement& other):chr(other.chr),color(other.color){}
+        PictureElement& operator =(const PictureElement& other)
+        {
+            if(this!=&other)
+            {
+                chr=other.chr;
+                color=other.color;
+            }
+            return *this;
+        }
+        PictureElement& operator =(const char& other)
+        {
+            chr=other;
+            return *this;
+        }
+        bool isEmpty() const
+        {
+            return chr == ' ';
+        }
+        uint8_t getColor() const
+        {
+            return color;
+        }
+        char getChr() const
+        {
+            return chr;
+        }
+    };
+    using Picture=std::vector<std::vector<PictureElement>>;
     enum LogLevel
     {
         Info,
@@ -41,7 +77,6 @@ private:
     void noBr();
     void preIndent();
     void printBrackets(const std::string &str, const int color);
-
 public:
     void newLine();
     void shift(size_t count);
@@ -66,8 +101,7 @@ public:
     static std::string substr(const std::string& in,const size_t pos);
     static std::string substr(const std::string& in, const size_t pos, const size_t count);
     void printW(const std::string& in, const size_t width, const std::string &filler);
-    void draw(const std::vector<std::vector<uint8_t>>& image);
-
+    void draw(const Picture &image);
     template<bool histMode, typename T> void printHist(const T &in)
     {
         constexpr size_t captionWidth = 8;
@@ -112,6 +146,7 @@ public:
             const auto valueH = static_cast<typename T::mapped_type>(i) * m + minV;
             --i;
             const auto valueL = static_cast<typename T::mapped_type>(i) * m + minV;
+
             if(i & 1)
             {
                 flood(captionWidth, " ");
@@ -123,7 +158,6 @@ public:
 
             flood(start, bars[0]);
             auto pos = in.cbegin();
-
             for(size_t j = 0; j<len;++j,++pos)
             {
                 print(bars[ (pos->second <= valueH || histMode) && pos->second >= valueL ]);
@@ -144,6 +178,7 @@ Lout& operator << (Lout& out, const size_t rhs);
 Lout& operator << (Lout& out, const char rhs);
 Lout& operator << (Lout& out, const int rhs);
 Lout& operator << (Lout& out, const time_t rhs);
+Lout& operator << (Lout& out, const Lout::PictureElement& rhs);
 
 Lout &anounce(Lout &ret);
 Lout &endl(Lout &ret);
@@ -152,8 +187,14 @@ Lout &ok(Lout& out);
 Lout &fail(Lout& out);
 Lout &newLine(Lout& out);
 Lout &pop(Lout& out);
-Lout &Color(Lout& out, const int);
+Lout &Color(Lout& out, const uint8_t);
 Lout &noColor(Lout& out);
+
+inline auto setColor(const uint8_t color)
+{
+    return std::bind(Color, std::placeholders::_1, color);
+}
+
 
 extern Lout lout;
 

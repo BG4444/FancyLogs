@@ -5,6 +5,7 @@
 #include <unicode/utf8.h>
 #include <iomanip>
 #include <cmath>
+#include <cassert>
 
 using namespace std;
 
@@ -39,11 +40,11 @@ using namespace std;
         return size.ws_col-width;
     }
 
-    Lout &Color(Lout &out, const int color)
+    Lout &Color(Lout &out, const uint8_t color)
     {
         if(out.canMessage())
         {
-            cout << "\033[1;" << color << 'm';
+            cout << "\033[1;" << int(color) << 'm';
         }
         return out;
     }
@@ -60,6 +61,9 @@ using namespace std;
 #endif
 
 Lout lout;
+
+
+
 
 constexpr std::array<char,4> Lout::tickChars;
 
@@ -116,7 +120,7 @@ void Lout::printBrackets(const string& str, const int color)
     const auto strHalfL=str.substr(0,midpos);
     const auto strHalfR=str.substr(midpos);
     constexpr size_t half=brWidth/2;
-    *this << bind(Color, placeholders::_1, color);
+    *this << setColor(color);
     cout << right << '['<< setfill(' ') << setw(half) << right;
     std::operator<<(cout,strHalfL);
     cout << setw(half) << left;
@@ -281,14 +285,14 @@ void Lout::printW(const string &in, const size_t width, const std::string& fille
     flood(width - len, filler);
 }
 
-void Lout::draw(const vector<vector<uint8_t> > &image)
+void Lout::draw(const Picture &image)
 {
     if(image.empty())
     {
         return;
     }
-    const auto widestLine = max_element(image.cbegin(), image.cend(), [](const vector<uint8_t>& a,
-                                                                         const vector<uint8_t>& b)
+    const auto widestLine = max_element(image.cbegin(), image.cend(), [](const Picture::value_type& a,
+                                                                         const Picture::value_type& b)
                                                                             {
                                                                                  return a.size() < b.size();
                                                                             }
@@ -310,11 +314,11 @@ void Lout::draw(const vector<vector<uint8_t> > &image)
         for(size_t j=0;j<printW;++j)
         {
             const size_t srcX = round (j * aspect);
-            const bool hasChar = pos.size()>srcX && pos[srcX];
+            const bool hasChar = pos.size()>srcX && !pos[srcX].isEmpty();
 
             if(hasChar)
-            {
-                print(string(1, pos[srcX]));
+            {                
+                *this <<pos[srcX];
             }
             else
             {
@@ -370,10 +374,11 @@ void Lout::doAnounce()
             indent(cnt,' ', ' ');
         }
 
-
+        *this<<setColor(36);
         cout << '['
              <<  QDateTime::currentDateTime().toString(fmt).toStdString()
-             << "]\033[0m     ";
+             << "]     ";
+        *this<<noColor;
         lastWasBrackets = false;
         hasAnounce = true;
     }
@@ -519,4 +524,10 @@ Lout &operator <<(Lout &out, std::function<Lout &(Lout &)> &&func)
 Lout &operator <<(Lout &out, const time_t rhs)
 {
     return out << to_string(rhs);
+}
+
+
+Lout &operator <<(Lout &out, const Lout::PictureElement &rhs)
+{
+    return out <<setColor(rhs.getColor()) << rhs.getChr() << noColor;
 }
