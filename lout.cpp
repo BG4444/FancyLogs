@@ -188,9 +188,9 @@ void Lout::percent(const size_t cur, const size_t total)
     }
 }
 
-Lout::Lout():fmt("dd.MM.yyyy hh:mm:ss.zzz"),
-             width(fmt.size()+1+brWidth+8),
-             bars{"\u2591", "\u2588"}
+Lout::Lout():bars{"\u2591", "\u2588"},
+             fmt("dd.MM.yyyy hh:mm:ss.zzz"),
+             width(fmt.size()+1+brWidth+8)
 {
     lastX.push(0);
     *this << Trace << "width is " << getWidth() << '\n' << pop;
