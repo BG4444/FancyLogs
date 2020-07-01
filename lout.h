@@ -25,11 +25,8 @@ public:
         PictureElement(const PictureElement& other):chr(other.chr),color(other.color){}
         PictureElement& operator =(const PictureElement& other)
         {
-            if(this!=&other)
-            {
-                chr=other.chr;
-                color=other.color;
-            }
+            chr=other.chr;
+            color=other.color;
             return *this;
         }
         PictureElement& operator =(const char& other)
