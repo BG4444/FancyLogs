@@ -531,3 +531,8 @@ Lout &operator <<(Lout &out, const Lout::PictureElement &rhs)
 {
     return out <<setColor(rhs.getColor()) << rhs.getChr() << noColor;
 }
+
+Lout &operator <<(Lout &out, const float &rhs)
+{
+    return out << to_string(rhs);
+}
