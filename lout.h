@@ -98,7 +98,7 @@ public:
     static std::string substr(const std::string& in,const size_t pos);
     static std::string substr(const std::string& in, const size_t pos, const size_t count);
     void printW(const std::string& in, const size_t width, const std::string &filler);
-    void draw(const Picture &image);
+    Lout &draw(const Picture &image);
     template<bool histMode, typename T> void printHist(const T &in)
     {
         constexpr size_t captionWidth = 8;
@@ -176,6 +176,7 @@ Lout& operator << (Lout& out, const char rhs);
 Lout& operator << (Lout& out, const int rhs);
 Lout& operator << (Lout& out, const time_t rhs);
 Lout& operator << (Lout& out, const Lout::PictureElement& rhs);
+Lout& operator << (Lout& out, const Lout::Picture& rhs);
 Lout& operator << (Lout& out, const float& rhs);
 
 Lout &anounce(Lout &ret);

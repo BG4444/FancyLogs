@@ -285,11 +285,11 @@ void Lout::printW(const string &in, const size_t width, const std::string& fille
     flood(width - len, filler);
 }
 
-void Lout::draw(const Picture &image)
+Lout& Lout::draw(const Picture &image)
 {
     if(image.empty())
     {
-        return;
+        return *this;
     }
     const auto widestLine = max_element(image.cbegin(), image.cend(), [](const Picture::value_type& a,
                                                                          const Picture::value_type& b)
@@ -299,7 +299,7 @@ void Lout::draw(const Picture &image)
                                                                         )->size();
     if(!widestLine)
     {
-        return;
+        return *this;
     }
     const auto screenW = getWidth();
     const auto printW = min(screenW, widestLine);
@@ -328,6 +328,7 @@ void Lout::draw(const Picture &image)
         newLine();
     }
     newLine();
+    return *this;
 }
 
 void Lout::indentLineStart()
@@ -535,4 +536,9 @@ Lout &operator <<(Lout &out, const Lout::PictureElement &rhs)
 Lout &operator <<(Lout &out, const float &rhs)
 {
     return out << to_string(rhs);
+}
+
+Lout &operator <<(Lout &out, const Lout::Picture &rhs)
+{
+    return out.draw(rhs);
 }
