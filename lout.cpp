@@ -309,7 +309,7 @@ Lout& Lout::draw(const Picture &image)
 
     for(size_t i=0;i<printH;++i)
     {
-        const size_t srcY = min( size_t(round (i * aspect)), image.size());
+        const size_t srcY = min( size_t(round (i * aspect)), image.size()-1);
         const auto& pos = image[srcY];
         for(size_t j=0;j<printW;++j)
         {
