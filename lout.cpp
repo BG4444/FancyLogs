@@ -363,16 +363,16 @@ void Lout::doAnounce()
             const auto cnt = old*4;
             lastX.push(cnt);
 
-            indent((old-1)*4, ' ', ' ');
+            indent((old-1)*4-2, ' ', ' ');
 
-            cout << '\\';
-            indent(3, '_', ' ');
+            cout << "\u2514\u2500";
+//            indent(, '_', ' ');
 
-            cout << '\n';
-            indent(cnt, ' ', '\\');
+//            cout << '\n';
+//            indent(cnt, ' ', '\\');
 
-            cout << '\n';
-            indent(cnt,' ', ' ');
+//            cout << '\n';
+//            indent(cnt,' ', ' ');
         }
 
         *this<<setColor(36);
