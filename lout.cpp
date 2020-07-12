@@ -133,37 +133,36 @@ Lout& Lout::brackets(const string &str, const int color )
 {
     if(canMessage())
     {
-//        if(lastWasBrackets)
-//        {
+        if(lastWasBrackets)
+        {
 //            cout << '\n';
-//        }
-//        else
-//        {
+        }
+        else
+        {
             const auto countOfindention = getWidth() - lastX.top();
             indent(countOfindention, ' ', ' ');
             printBrackets(str, color);
-//        }
+        }
 
-//        if(lastX.size()>1)
-//        {
-//            lastX.pop();
+        if(lastX.size()>1)
+        {
+            lastX.pop();
 
 //            indent(lastX.size()*4, ' ', ' ');
-////            indent(4, '_', '/');
 
 //            shift(-lastX.size()*4);
 
-//            if(lastWasBrackets)
-//            {
-//                const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
-//                indent(countOfindention, ' ', ' ');
-//                printBrackets(str, color);
-//            }
-//        }
-//        else
-//        {
+            if(lastWasBrackets)
+            {
+                const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
+                indent(countOfindention, ' ', ' ');
+                printBrackets(str, color);
+            }
+        }
+        else
+        {
             resetX();
-//        }
+        }
         lastWasBrackets = true;
         hasAnounce = false;
     }
