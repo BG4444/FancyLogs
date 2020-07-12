@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <cmath>
 #include <cassert>
+#include <iostream>
 
 using namespace std;
 
@@ -44,7 +45,7 @@ using namespace std;
     {
         if(out.canMessage())
         {
-            cout << "\033[1;" << int(color) << 'm';
+            out.getOutput() << "\033[1;" << int(color) << 'm';
         }
         return out;
     }
@@ -53,17 +54,14 @@ using namespace std;
     {
         if(out.canMessage())
         {
-            cout << "\033[0m";
+            out.getOutput() << "\033[0m";
         }
         return out;
     }
 
 #endif
 
-Lout lout;
-
-
-
+Lout lout(cout);
 
 constexpr std::array<char,4> Lout::tickChars;
 
@@ -121,11 +119,11 @@ void Lout::printBrackets(const string& str, const int color)
     const auto strHalfR=str.substr(midpos);
     constexpr size_t half=brWidth/2;
     *this << setColor(color);
-    cout << right << '['<< setfill(' ') << setw(half) << right;
-    std::operator<<(cout,strHalfL);
-    cout << setw(half) << left;
-    std::operator<<(cout,strHalfR);
-    cout << ']';
+    output << right << '['<< setfill(' ') << setw(half) << right;
+    std::operator<<(output,strHalfL);
+    output << setw(half) << left;
+    std::operator<<(output,strHalfR);
+    output << ']';
     *this<<noColor << flush;
 }
 
@@ -135,7 +133,7 @@ Lout& Lout::brackets(const string &str, const int color )
     {
         if(lastWasBrackets)
         {
-//            cout << '\n';
+//            output << '\n';
         }
         else
         {
@@ -154,7 +152,7 @@ Lout& Lout::brackets(const string &str, const int color )
 
             if(lastWasBrackets)
             {
-                const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
+                const auto countOfindention = getWidth()  + fmt.size() + 7 ; //- lastX.size() * 4
                 indent(countOfindention, ' ', ' ');
                 printBrackets(str, color);
             }
@@ -187,7 +185,9 @@ void Lout::percent(const size_t cur, const size_t total)
     }
 }
 
-Lout::Lout():bars{"\u2591", "\u2588"},
+Lout::Lout(ostream &output):
+             output(output),
+             bars{"\u2591", "\u2588"},
              fmt("dd.MM.yyyy hh:mm:ss.zzz"),
              width(fmt.size()+1+brWidth+8)
 {
@@ -230,7 +230,7 @@ void Lout::indent(const size_t cnt, const char inner, const char chr)
 {
     if(cnt)
     {
-        cout << std::right << std::setfill(inner) << std::setw(cnt) <<  chr;
+        output << std::right << std::setfill(inner) << std::setw(cnt) <<  chr;
     }
 }
 
@@ -340,7 +340,7 @@ void Lout::newLine()
     if(canMessage())
     {
         resetX();
-        cout << '\n';
+        output << '\n';
         indentLineStart();
         hasAnounce = true;
         lastWasBrackets = false;
@@ -351,18 +351,18 @@ void Lout::doAnounce()
 {
     if(canMessage())
     {
-        cout << '\n';
+        output << '\n';
         if( !lastWasBrackets || getLastX())
         {
             const auto old = lastX.size();
             const auto cnt = old*4;
             lastX.push(cnt);
             indent((old-1)*4, ' ', ' ');
-            cout << "\u2514\u2500\u2500\u2500";
+            output << "\u2514\u2500\u2500\u2500";
         }
 
         *this<<setColor(36);
-        cout << '['
+        output << '['
              <<  QDateTime::currentDateTime().toString(fmt).toStdString()
              << "]     ";
         *this<<noColor;
@@ -401,11 +401,11 @@ void Lout::print(const string &in)
             {
                 const auto& outS=substr(in, j);
                 shift(strlen(outS));
-                cout << outS;
+                output << outS;
                 *this << flush;
                 return;
             }
-            cout << substr(in, j, i-j) << '\n';
+            output << substr(in, j, i-j) << '\n';
             resetX();
             indentLineStart();
         }
@@ -450,7 +450,7 @@ Lout &operator <<(Lout &out, const char rhs)
 {
     if(out.canMessage())
     {
-        cout << string(1, rhs);
+        out.getOutput() << string(1, rhs);
     }
     return out;
 }
@@ -459,7 +459,7 @@ Lout &endl(Lout &out)
 {    
     if(out.canMessage())
     {
-        cout << endl;
+        out.getOutput() << endl;
         out.resetX();
     }
     return out;
@@ -469,7 +469,7 @@ Lout &flush(Lout &out)
 {
     if(out.canMessage())
     {
-        cout << flush;
+        out.getOutput() << flush;
     }
     return out;
 }
