@@ -133,37 +133,37 @@ Lout& Lout::brackets(const string &str, const int color )
 {
     if(canMessage())
     {
-        if(lastWasBrackets)
-        {
-            cout << '\n';
-        }
-        else
-        {
+//        if(lastWasBrackets)
+//        {
+//            cout << '\n';
+//        }
+//        else
+//        {
             const auto countOfindention = getWidth() - lastX.top();
             indent(countOfindention, ' ', ' ');
             printBrackets(str, color);
-        }
+//        }
 
-        if(lastX.size()>1)
-        {
-            lastX.pop();
+//        if(lastX.size()>1)
+//        {
+//            lastX.pop();
 
-            indent(lastX.size()*4, ' ', ' ');
-//            indent(4, '_', '/');
+//            indent(lastX.size()*4, ' ', ' ');
+////            indent(4, '_', '/');
 
-            shift(-lastX.size()*4);
+//            shift(-lastX.size()*4);
 
-            if(lastWasBrackets)
-            {
-                const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
-                indent(countOfindention, ' ', ' ');
-                printBrackets(str, color);
-            }
-        }
-        else
-        {
+//            if(lastWasBrackets)
+//            {
+//                const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
+//                indent(countOfindention, ' ', ' ');
+//                printBrackets(str, color);
+//            }
+//        }
+//        else
+//        {
             resetX();
-        }
+//        }
         lastWasBrackets = true;
         hasAnounce = false;
     }
@@ -358,17 +358,8 @@ void Lout::doAnounce()
             const auto old = lastX.size();
             const auto cnt = old*4;
             lastX.push(cnt);
-
             indent((old-1)*4, ' ', ' ');
-
             cout << "\u2514\u2500\u2500\u2500";
-
-
-//            cout << '\n';
-//            indent(cnt, ' ', '\\');
-
-//            cout << '\n';
-//            indent(cnt,' ', ' ');
         }
 
         *this<<setColor(36);
