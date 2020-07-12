@@ -131,7 +131,7 @@ void Lout::printBrackets(const string& str, const int color)
 
 Lout& Lout::brackets(const string &str, const int color )
 {
-    if(!canMessage())
+    if(canMessage())
     {
         if(lastWasBrackets)
         {
@@ -143,11 +143,14 @@ Lout& Lout::brackets(const string &str, const int color )
             indent(countOfindention, ' ', ' ');
             printBrackets(str, color);
         }
+
         if(lastX.size()>1)
         {
             lastX.pop();
 
             indent(lastX.size()*4, ' ', ' ');
+//            indent(4, '_', '/');
+
             shift(-lastX.size()*4);
 
             if(lastWasBrackets)
@@ -359,8 +362,17 @@ void Lout::doAnounce()
             const auto old = lastX.size();
             const auto cnt = old*4;
             lastX.push(cnt);
+
             indent((old-1)*4, ' ', ' ');
+
             cout << "\u2514\u2500\u2500\u2500";
+
+
+//            cout << '\n';
+//            indent(cnt, ' ', '\\');
+
+//            cout << '\n';
+//            indent(cnt,' ', ' ');
         }
 
         *this<<setColor(36);
