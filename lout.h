@@ -11,6 +11,7 @@
 #include <functional>
 #include <map>
 #include <vector>
+#include <thread>
 
 class Lout
 {
@@ -178,6 +179,7 @@ Lout& operator << (Lout& out, const time_t rhs);
 Lout& operator << (Lout& out, const Lout::PictureElement& rhs);
 Lout& operator << (Lout& out, const Lout::Picture& rhs);
 Lout& operator << (Lout& out, const float& rhs);
+Lout& operator << (Lout& out, const std::thread::id& rhs);
 
 Lout &anounce(Lout &ret);
 Lout &endl(Lout &ret);

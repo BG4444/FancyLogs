@@ -542,3 +542,10 @@ Lout &operator <<(Lout &out, const Lout::Picture &rhs)
 {
     return out.draw(rhs);
 }
+
+Lout &operator <<(Lout &out, const thread::id &rhs)
+{
+    stringstream s;
+    s << rhs;
+    return out << s.str();
+}
