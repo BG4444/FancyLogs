@@ -131,36 +131,33 @@ void Lout::printBrackets(const string& str, const int color)
 
 Lout& Lout::brackets(const string &str, const int color )
 {
-    if(canMessage())
+    if(!canMessage())
     {
-        if(lastWasBrackets)
+//        if(lastWasBrackets)
         {
-            cout << '\n';
+//            cout << '\n';
         }
-        else
+//        else
         {
             const auto countOfindention = getWidth() - lastX.top();
             indent(countOfindention, ' ', ' ');
             printBrackets(str, color);
         }
+//        if(lastX.size()>1)
+//        {
+//            lastX.pop();
 
-        if(lastX.size()>1)
-        {
-            lastX.pop();
+//            indent(lastX.size()*4, ' ', ' ');
+//            shift(-lastX.size()*4);
 
-            indent(lastX.size()*4, ' ', ' ');
-//            indent(4, '_', '/');
-
-            shift(-lastX.size()*4);
-
-            if(lastWasBrackets)
-            {
-                const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
-                indent(countOfindention, ' ', ' ');
-                printBrackets(str, color);
-            }
-        }
-        else
+//            if(lastWasBrackets)
+//            {
+//                const auto countOfindention = getWidth()  + fmt.size() + 7 - lastX.size() * 4;
+//                indent(countOfindention, ' ', ' ');
+//                printBrackets(str, color);
+//            }
+//        }
+//        else
         {
             resetX();
         }
@@ -353,26 +350,13 @@ void Lout::doAnounce()
     if(canMessage())
     {
         cout << '\n';
-        if(lastWasBrackets && !getLastX())
-        {
-
-        }
-        else
+        if(!lastWasBrackets || getLastX())
         {
             const auto old = lastX.size();
             const auto cnt = old*4;
             lastX.push(cnt);
-
             indent((old-1)*4, ' ', ' ');
-
             cout << "\u2514\u2500\u2500\u2500";
-
-
-//            cout << '\n';
-//            indent(cnt, ' ', '\\');
-
-//            cout << '\n';
-//            indent(cnt,' ', ' ');
         }
 
         *this<<setColor(36);
