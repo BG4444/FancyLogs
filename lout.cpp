@@ -350,7 +350,11 @@ void Lout::doAnounce()
     if(canMessage())
     {
         cout << '\n';
-        if(!lastWasBrackets || getLastX())
+        if(lastWasBrackets && !getLastX())
+        {
+
+        }
+        else
         {
             const auto old = lastX.size();
             const auto cnt = old*4;
