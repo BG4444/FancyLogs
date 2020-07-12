@@ -148,8 +148,8 @@ Lout& Lout::brackets(const string &str, const int color )
         {
             lastX.pop();
 
-            indent((lastX.size()-1)*4, ' ', ' ');
-            indent(4, '_', '/');
+            indent(lastX.size()*4, ' ', ' ');
+//            indent(4, '_', '/');
 
             shift(-lastX.size()*4);
 
@@ -365,14 +365,8 @@ void Lout::doAnounce()
 
             indent((old-1)*4, ' ', ' ');
 
-            cout << '\\';
-            indent(3, '_', ' ');
-
-            cout << '\n';
-            indent(cnt, ' ', '\\');
-
-            cout << '\n';
-            indent(cnt,' ', ' ');
+            cout << "\u2514";
+            flood(cnt-4,"\u2500");
         }
 
         *this<<setColor(36);
