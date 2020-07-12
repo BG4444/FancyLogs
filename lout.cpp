@@ -363,9 +363,10 @@ void Lout::doAnounce()
             const auto cnt = old*4;
             lastX.push(cnt);
 
-            indent((old-1)*4-2, ' ', ' ');
+            indent((old-1)*4, ' ', ' ');
 
-            cout << "\u2514\u2500";
+            cout <<  "\u2514";
+            flood(3, "\u2500");
 //            indent(, '_', ' ');
 
 //            cout << '\n';
