@@ -365,9 +365,8 @@ void Lout::doAnounce()
 
             indent((old-1)*4, ' ', ' ');
 
-            cout <<  "\u2514";
-            flood(3, "\u2500");
-//            indent(, '_', ' ');
+            cout << '\\';
+            indent(3, '_', ' ');
 
 //            cout << '\n';
 //            indent(cnt, ' ', '\\');
