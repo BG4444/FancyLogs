@@ -1,7 +1,6 @@
 #ifndef LOUT_H
 #define LOUT_H
 
-#include <iostream>
 #include <chrono>
 #include <ctime>
 #include <array>
@@ -12,6 +11,7 @@
 #include <map>
 #include <vector>
 #include <thread>
+#include <mutex>
 
 class Lout
 {
@@ -58,17 +58,19 @@ public:
         DeepTrace
     };
 private:
+    std::ostream& output;
     std::stack<LogLevel> logLevels;
-    static auto tm();
     constexpr static std::array<char,4> tickChars{'|','/','-','\\'};
     const std::array<std::string, 2> bars;
     std::array<char,4>::const_iterator curTick=tickChars.cbegin();
-    void nextTick();        
     std::stack<size_t> lastX;
     LogLevel msgLevel=Info;
     LogLevel outLevel=Info;
+    std::mutex mtx;
     bool lastWasBrackets = true;
     bool hasAnounce = false;
+    static auto tm();
+    void nextTick();
     void indent(const size_t cnt, const char inner, const char chr);
     void flood(size_t cnt, const std::string& filler);
     void indentLineStart();
@@ -87,7 +89,7 @@ public:
     Lout &brackets(const std::string& str, const int color);
     void tick();
     void percent(const size_t cur,const size_t total);
-    Lout();    
+    Lout(std::ostream& output);
     bool canMessage() const;
     void pushMsgLevel(const LogLevel lvl);
     void popMsgLevel();
@@ -100,6 +102,10 @@ public:
     static std::string substr(const std::string& in, const size_t pos, const size_t count);
     void printW(const std::string& in, const size_t width, const std::string &filler);
     Lout &draw(const Picture &image);
+    std::ostream& getOutput()
+    {
+        return output;
+    }
     template<bool histMode, typename T> void printHist(const T &in)
     {
         constexpr size_t captionWidth = 8;
