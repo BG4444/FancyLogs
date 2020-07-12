@@ -12,6 +12,9 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <iostream>
+#include <sstream>
+
 
 class Lout
 {
@@ -69,6 +72,7 @@ private:
     std::mutex mtx;
     bool lastWasBrackets = true;
     bool hasAnounce = false;
+    inline static std::vector<Lout*> outputs;
     static auto tm();
     void nextTick();
     void indent(const size_t cnt, const char inner, const char chr);
@@ -77,7 +81,21 @@ private:
     void noBr();
     void preIndent();
     void printBrackets(const std::string &str, const int color);
+    static std::ostream& mkOutput()
+    {
+        static bool isFirst = true;
+        static thread_local std::unique_ptr<std::ostream, std::function<void(std::ostream*)>> out( isFirst ? &std::cout : new std::stringstream(), [](std::ostream* in){ if(in!=&std::cout) { delete in;} } );
+        isFirst = false;
+        return *out;
+    }
+
 public:
+    static Lout& getInstance()
+    {
+        static thread_local Lout out;
+        return out;
+    }
+
     void newLine();
     void shift(size_t count);
     void resetX();
@@ -89,7 +107,7 @@ public:
     Lout &brackets(const std::string& str, const int color);
     void tick();
     void percent(const size_t cur,const size_t total);
-    Lout(std::ostream& output);
+    Lout();
     bool canMessage() const;
     void pushMsgLevel(const LogLevel lvl);
     void popMsgLevel();
@@ -203,6 +221,6 @@ inline auto setColor(const uint8_t color)
 }
 
 
-extern Lout lout;
+#define lout Lout::getInstance()
 
 #endif // LOUT_H

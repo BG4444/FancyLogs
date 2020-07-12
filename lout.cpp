@@ -1,14 +1,13 @@
 #include "lout.h"
-#include <sstream>
 #include <iomanip>
 #include <QObject>
 #include <unicode/utf8.h>
 #include <iomanip>
 #include <cmath>
 #include <cassert>
-#include <iostream>
 
 using namespace std;
+
 
 #ifdef _WIN32
 #include <windows.h>
@@ -60,8 +59,6 @@ using namespace std;
     }
 
 #endif
-
-Lout lout(cout);
 
 constexpr std::array<char,4> Lout::tickChars;
 
@@ -185,12 +182,16 @@ void Lout::percent(const size_t cur, const size_t total)
     }
 }
 
-Lout::Lout(ostream &output):
-             output(output),
+Lout::Lout():
+             output(mkOutput()),
              bars{"\u2591", "\u2588"},
              fmt("dd.MM.yyyy hh:mm:ss.zzz"),
              width(fmt.size()+1+brWidth+8)
 {
+    {
+        std::lock_guard lck(mtx);
+        outputs.push_back(this);
+    }
     lastX.push(0);
     *this << Trace << "width is " << getWidth() << '\n' << pop;
 }
