@@ -14,9 +14,16 @@ using namespace std;
 
     size_t Lout::getWidth()
     {
-        CONSOLE_SCREEN_BUFFER_INFO nfo;
-        GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),&nfo);
-        return nfo.srWindow.Right-nfo.srWindow.Left-width;
+        if(&output==&cout)
+        {
+            CONSOLE_SCREEN_BUFFER_INFO nfo;
+            GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),&nfo);
+            return nfo.srWindow.Right-nfo.srWindow.Left-width;
+        }
+        else
+        {
+            return 120;
+        }
     }
 
     Lout &Color(Lout &out, const int color)
@@ -35,16 +42,21 @@ using namespace std;
 
     size_t Lout::getWidth()
     {
-        struct winsize size;
-        ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
-        return size.ws_col-width;
+        if(output.str.get()==&cout)
+        {
+            struct winsize size;
+            ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
+            return size.ws_col-width;
+        }
+        return 120;
     }
 
     Lout &Color(Lout &out, const uint8_t color)
     {
         if(out.canMessage())
         {
-            out.getOutput() << "\033[1;" << int(color) << 'm';
+            lock_guard lck(out.output.mtx);
+            *out.output.str << "\033[1;" << int(color) << 'm';
         }
         return out;
     }
@@ -53,7 +65,8 @@ using namespace std;
     {
         if(out.canMessage())
         {
-            out.getOutput() << "\033[0m";
+            lock_guard lck(out.output.mtx);
+            *out.output.str << "\033[0m";
         }
         return out;
     }
@@ -111,16 +124,17 @@ size_t Lout::getLastX() const
 
 void Lout::printBrackets(const string& str, const int color)
 {
+    lock_guard lck(output.mtx);
     const auto midpos=str.length()/2;
     const auto strHalfL=str.substr(0,midpos);
     const auto strHalfR=str.substr(midpos);
     constexpr size_t half=brWidth/2;
     *this << setColor(color);
-    output << right << '['<< setfill(' ') << setw(half) << right;
-    std::operator<<(output,strHalfL);
-    output << setw(half) << left;
-    std::operator<<(output,strHalfR);
-    output << ']';
+    *output.str << right << '['<< setfill(' ') << setw(half) << right;
+    std::operator<<(*output.str,strHalfL);
+    *output.str << setw(half) << left;
+    std::operator<<(*output.str,strHalfR);
+    *output.str << ']';
     *this<<noColor << flush;
 }
 
@@ -128,7 +142,7 @@ Lout& Lout::brackets(const string &str, const int color )
 {
     if(canMessage())
     {
-        if(lastWasBrackets)
+        if(output.lastWasBrackets)
         {
 //            output << '\n';
         }
@@ -147,7 +161,7 @@ Lout& Lout::brackets(const string &str, const int color )
 
 //            shift(-lastX.size()*4);
 
-            if(lastWasBrackets)
+            if(output.lastWasBrackets)
             {
                 const auto countOfindention = getWidth()  + fmt.size() + 7 ; //- lastX.size() * 4
                 indent(countOfindention, ' ', ' ');
@@ -158,7 +172,7 @@ Lout& Lout::brackets(const string &str, const int color )
         {
             resetX();
         }
-        lastWasBrackets = true;
+        output.lastWasBrackets = true;
         hasAnounce = false;
     }
     return *this;
@@ -187,13 +201,8 @@ Lout::Lout():
              bars{"\u2591", "\u2588"},
              fmt("dd.MM.yyyy hh:mm:ss.zzz"),
              width(fmt.size()+1+brWidth+8)
-{
-    {
-        std::lock_guard lck(mtx);
-        outputs.push_back(this);
-    }
-    lastX.push(0);
-    *this << Trace << "width is " << getWidth() << '\n' << pop;
+{    
+    lastX.push(0); 
 }
 
 bool Lout::canMessage() const
@@ -206,7 +215,7 @@ void Lout::popMsgLevel()
     if(logLevels.empty())
     {
         pushMsgLevel(Info);
-        *this << endl
+        *this << '\n'
               << anounce
               << QObject::tr("Wrong message stack balance!")
               << fail;
@@ -223,7 +232,7 @@ void Lout::setOutLevel(const Lout::LogLevel outLevel)
 
 void Lout::noBr()
 {
-    lastWasBrackets = false;
+    output.lastWasBrackets = false;
     hasAnounce = false;
 }
 
@@ -231,7 +240,8 @@ void Lout::indent(const size_t cnt, const char inner, const char chr)
 {
     if(cnt)
     {
-        output << std::right << std::setfill(inner) << std::setw(cnt) <<  chr;
+        lock_guard lck(output.mtx);
+        *output.str << std::right << std::setfill(inner) << std::setw(cnt) <<  chr;
     }
 }
 
@@ -340,11 +350,12 @@ void Lout::newLine()
 {
     if(canMessage())
     {
+        lock_guard lck(output.mtx);
         resetX();
-        output << '\n';
+        *output.str << '\n';
         indentLineStart();
         hasAnounce = true;
-        lastWasBrackets = false;
+        output.lastWasBrackets = false;
     }
 }
 
@@ -352,29 +363,30 @@ void Lout::doAnounce()
 {
     if(canMessage())
     {
-        output << '\n';
-        if( !lastWasBrackets || getLastX())
+        lock_guard lck(output.mtx);
+        *output.str << '\n';
+        if( !output.lastWasBrackets || getLastX())
         {
             const auto old = lastX.size();
             const auto cnt = old*4;
             lastX.push(cnt);
             indent((old-1)*4, ' ', ' ');
-            output << "\u2514\u2500\u2500\u2500";
+            *output.str << "\u2514\u2500\u2500\u2500";
         }
 
         *this<<setColor(36);
-        output << '['
+        *output.str << '['
              <<  QDateTime::currentDateTime().toString(fmt).toStdString()
              << "]     ";
         *this<<noColor;
-        lastWasBrackets = false;
+        output.lastWasBrackets = false;
         hasAnounce = true;
     }
 }
 
 void Lout::preIndent()
 {
-    if(!hasAnounce && lastWasBrackets)
+    if(!hasAnounce && output.lastWasBrackets)
     {
         indentLineStart();
     }
@@ -384,6 +396,7 @@ void Lout::print(const string &in)
 {
     if(canMessage())
     {
+        lock_guard lck(output.mtx);
         const size_t width=getWidth();  //width of text area
 
         preIndent();
@@ -402,11 +415,11 @@ void Lout::print(const string &in)
             {
                 const auto& outS=substr(in, j);
                 shift(strlen(outS));
-                output << outS;
+                *output.str << outS;
                 *this << flush;
                 return;
             }
-            output << substr(in, j, i-j) << '\n';
+            *output.str << substr(in, j, i-j) << '\n';
             resetX();
             indentLineStart();
         }
@@ -450,18 +463,8 @@ Lout &operator <<(Lout &out, Lout &(*func)(Lout &))
 Lout &operator <<(Lout &out, const char rhs)
 {
     if(out.canMessage())
-    {
-        out.getOutput() << string(1, rhs);
-    }
-    return out;
-}
-
-Lout &endl(Lout &out)
-{    
-    if(out.canMessage())
-    {
-        out.getOutput() << endl;
-        out.resetX();
+    {        
+        out << string(1, rhs);
     }
     return out;
 }
@@ -470,7 +473,8 @@ Lout &flush(Lout &out)
 {
     if(out.canMessage())
     {
-        out.getOutput() << flush;
+        lock_guard lck(out.output.mtx);
+        *out.output.str << flush;
     }
     return out;
 }

@@ -61,7 +61,33 @@ public:
         DeepTrace
     };
 private:
-    std::ostream& output;
+    struct ProtectedStream
+    {
+        std::unique_ptr<std::ostream, std::function<void(std::ostream*)>> str;
+        std::recursive_mutex mtx;
+        bool lastWasBrackets = true;
+        ProtectedStream(const bool isFirst):str(
+                                                        std::unique_ptr<std::ostream,
+                                                        std::function<void(std::ostream*)>
+                                                       >
+                                                       (
+                                                           isFirst
+                                                              ? &std::cout
+                                                              : new std::stringstream(),
+                                                           [](std::ostream* in)
+                                                                               {
+                                                                                   if(in!=&std::cout)
+                                                                                   {
+                                                                                       delete in;
+                                                                                   }
+                                                                               }
+                                                       )
+                                               )
+        {
+        }
+    };
+
+    ProtectedStream& output;
     std::stack<LogLevel> logLevels;
     constexpr static std::array<char,4> tickChars{'|','/','-','\\'};
     const std::array<std::string, 2> bars;
@@ -69,10 +95,9 @@ private:
     std::stack<size_t> lastX;
     LogLevel msgLevel=Info;
     LogLevel outLevel=Info;
-    std::mutex mtx;
-    bool lastWasBrackets = true;
-    bool hasAnounce = false;
-    inline static std::vector<Lout*> outputs;
+    inline static std::mutex globalMtx;        
+    bool hasAnounce = false;    
+    inline static std::list< ProtectedStream > storedLogs;
     static auto tm();
     void nextTick();
     void indent(const size_t cnt, const char inner, const char chr);
@@ -81,14 +106,15 @@ private:
     void noBr();
     void preIndent();
     void printBrackets(const std::string &str, const int color);
-    static std::ostream& mkOutput()
+    static ProtectedStream& mkOutput()
     {
-        static bool isFirst = true;
-        static thread_local std::unique_ptr<std::ostream, std::function<void(std::ostream*)>> out( isFirst ? &std::cout : new std::stringstream(), [](std::ostream* in){ if(in!=&std::cout) { delete in;} } );
-        isFirst = false;
-        return *out;
-    }
+        std::lock_guard lck(globalMtx);
+        storedLogs.emplace_back(
+                                    storedLogs.empty()
+                               );
+        return storedLogs.back();
 
+    }
 public:
     static Lout& getInstance()
     {
@@ -107,7 +133,7 @@ public:
     Lout &brackets(const std::string& str, const int color);
     void tick();
     void percent(const size_t cur,const size_t total);
-    Lout();
+    Lout();    
     bool canMessage() const;
     void pushMsgLevel(const LogLevel lvl);
     void popMsgLevel();
@@ -119,11 +145,7 @@ public:
     static std::string substr(const std::string& in,const size_t pos);
     static std::string substr(const std::string& in, const size_t pos, const size_t count);
     void printW(const std::string& in, const size_t width, const std::string &filler);
-    Lout &draw(const Picture &image);
-    std::ostream& getOutput()
-    {
-        return output;
-    }
+    Lout &draw(const Picture &image);    
     template<bool histMode, typename T> void printHist(const T &in)
     {
         constexpr size_t captionWidth = 8;
@@ -188,6 +210,9 @@ public:
             flood(width-len-start, bars[0]);
         }
     }
+    friend Lout &Color(Lout& out, const uint8_t);
+    friend Lout &noColor(Lout& out);
+    friend Lout &flush(Lout& out);
 };
 
 Lout& operator << (Lout& out, const Lout::LogLevel lvl);
@@ -206,7 +231,6 @@ Lout& operator << (Lout& out, const float& rhs);
 Lout& operator << (Lout& out, const std::thread::id& rhs);
 
 Lout &anounce(Lout &ret);
-Lout &endl(Lout &ret);
 Lout &flush(Lout& out);
 Lout &ok(Lout& out);
 Lout &fail(Lout& out);
