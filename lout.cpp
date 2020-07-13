@@ -142,9 +142,24 @@ Lout& Lout::brackets(const string &str, const int color )
 {
     if(canMessage())
     {
+        size_t cnt=0;
+        unique_lock lck(globalMtx);
+        for(const auto&i:storedLogs)
+        {
+            if(i.str.get()!=&cout && i.lastWasBrackets && static_cast<stringstream*>(i.str.get())->str().empty())
+            {
+                ++cnt;
+            }
+        }
+        if(!cnt)
+        {
+            lck.unlock();
+        }
+
+
         if(output.lastWasBrackets)
         {
-//            output << '\n';
+                *output.str << '\n';
         }
         else
         {
@@ -157,13 +172,16 @@ Lout& Lout::brackets(const string &str, const int color )
         {
             lastX.pop();
 
-//            indent(lastX.size()*4, ' ', ' ');
+            *this << setColor(34);
+            constexpr string_view wt(" threads wanna talk");
+            *output.str << cnt << wt;
+            *this << noColor;
 
-//            shift(-lastX.size()*4);
+            shift(wt.length());
 
             if(output.lastWasBrackets)
             {
-                const auto countOfindention = getWidth()  + fmt.size() + 7 ; //- lastX.size() * 4
+                const auto countOfindention = getWidth()  + fmt.size() + 7 ;
                 indent(countOfindention, ' ', ' ');
                 printBrackets(str, color);
             }
