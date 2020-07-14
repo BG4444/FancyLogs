@@ -21,7 +21,7 @@ using namespace std;
         }
         else
         {
-            return 120;
+            return 60;
         }
     }
 
@@ -47,7 +47,7 @@ using namespace std;
             ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
             return size.ws_col-width;
         }
-        return 120;
+        return 60;
     }
 
     Lout &Color(Lout &out, const uint8_t color)
@@ -141,24 +141,23 @@ Lout& Lout::brackets(const string &str, const int color )
 {
     if(canMessage())
     {
-        size_t cnt=0;
-        unique_lock lck(globalMtx);
-        for(const auto&i:storedLogs)
+        string threadLogs;
         {
-            if(i.str.get()!=&cout && i.lastWasBrackets && static_cast<stringstream*>(i.str.get())->str().empty())
+            unique_lock lck(globalMtx);
+            for(auto&i:storedLogs)
             {
-                ++cnt;
+                if(i.str.get()!=&cout && i.lastWasBrackets)
+                {
+                    const auto text = static_cast<stringstream*>(i.str.get())->str();
+                    i.str.reset(new stringstream());
+                    threadLogs+=text;
+                }
             }
         }
-        if(!cnt)
-        {
-            lck.unlock();
-        }
-
 
         if(output.lastWasBrackets)
         {
-//                *output.str << '\n';
+//            *output.str << '\n';
         }
         else
         {
@@ -171,13 +170,6 @@ Lout& Lout::brackets(const string &str, const int color )
         {
             lastX.pop();
 
-//            *this << setColor(34);
-//            constexpr string_view wt(" threads wanna talk");
-//            *output.str << cnt << wt;
-//            *this << noColor;
-
-//            shift(wt.length());
-
             if(output.lastWasBrackets)
             {
                 const auto countOfindention = getWidth()  + fmt.size() + 7 ;
@@ -189,6 +181,11 @@ Lout& Lout::brackets(const string &str, const int color )
         {
             resetX();
         }
+        if(!threadLogs.empty())
+        {
+            *this << anounce << threadLogs << ok;
+        }
+
         output.lastWasBrackets = true;
         hasAnounce = false;
     }
