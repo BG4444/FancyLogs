@@ -8,7 +8,6 @@
 
 using namespace std;
 
-
 #ifdef _WIN32
 #include <windows.h>
 
@@ -159,7 +158,7 @@ Lout& Lout::brackets(const string &str, const int color )
 
         if(output.lastWasBrackets)
         {
-                *output.str << '\n';
+//                *output.str << '\n';
         }
         else
         {
@@ -172,12 +171,12 @@ Lout& Lout::brackets(const string &str, const int color )
         {
             lastX.pop();
 
-            *this << setColor(34);
-            constexpr string_view wt(" threads wanna talk");
-            *output.str << cnt << wt;
-            *this << noColor;
+//            *this << setColor(34);
+//            constexpr string_view wt(" threads wanna talk");
+//            *output.str << cnt << wt;
+//            *this << noColor;
 
-            shift(wt.length());
+//            shift(wt.length());
 
             if(output.lastWasBrackets)
             {
@@ -557,4 +556,9 @@ Lout &operator <<(Lout &out, const thread::id &rhs)
     stringstream s;
     s << rhs;
     return out << s.str();
+}
+
+Lout &operator <<(Lout &out, const unsigned int rhs)
+{
+    return out << to_string(rhs);
 }

@@ -224,6 +224,7 @@ Lout& operator << (Lout& out, const char* rhs);
 Lout& operator << (Lout& out, const size_t rhs);
 Lout& operator << (Lout& out, const char rhs);
 Lout& operator << (Lout& out, const int rhs);
+Lout& operator << (Lout& out, const unsigned int rhs);
 Lout& operator << (Lout& out, const time_t rhs);
 Lout& operator << (Lout& out, const Lout::PictureElement& rhs);
 Lout& operator << (Lout& out, const Lout::Picture& rhs);
