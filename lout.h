@@ -139,11 +139,12 @@ public:
     void popMsgLevel();
     void setOutLevel(const LogLevel outLevel);    
     void doAnounce();
-    void print(const std::string& in);
-    static size_t strlen(const std::string& in);
-    static int roll(const std::string& in, int i, size_t pos);
-    static std::string substr(const std::string& in,const size_t pos);
-    static std::string substr(const std::string& in, const size_t pos, const size_t count);
+    void print(std::string_view in);
+    static size_t strlen(const std::string_view &in);
+    static int roll(const std::string_view &in, int i, size_t pos);
+    static int roll(const std::string_view &in, int i);
+    static std::string_view substr(const std::string_view &in, const size_t pos);
+    static std::string_view substr(const std::string_view &in, const size_t pos, const size_t count);
     void printW(const std::string& in, const size_t width, const std::string &filler);
     Lout &draw(const Picture &image);    
     template<bool histMode, typename T> void printHist(const T &in)

@@ -270,39 +270,56 @@ void Lout::flood(size_t cnt, const string& chr)
     }
 }
 
-size_t Lout::strlen(const string &in)
+size_t Lout::strlen(const string_view &in)
 {
     size_t ret=0;
     const int len = in.length();
     for(int i=0;i < len;++ret)
     {
         UChar32 c;
-        U8_NEXT(in.c_str(), i, len, c);
+        U8_NEXT(in.cbegin(), i, len, c);
     }
     return ret;
 }
 
-int Lout::roll(const string &in, int i, size_t pos)
+int Lout::roll(const string_view &in, int i)
+{
+    const int len=in.length();
+    while(i<len)
+    {
+        UChar32 c;
+        U8_NEXT(in.cbegin(), i, len, c);
+        if(c=='\n')
+        {
+            return i;
+        }
+    }
+    return i;
+}
+
+
+int Lout::roll(const string_view &in, int i, size_t pos)
 {
     const int len=in.length();
     while(pos--)
     {
         UChar32 c;
-        U8_NEXT(in.c_str(), i, len, c);
+        U8_NEXT(in.cbegin(), i, len, c);
     }
     return i;
 }
 
-string Lout::substr(const string &in, const size_t pos)
+string_view Lout::substr(const string_view &in, const size_t pos)
 {
-    return in.substr(roll(in, 0, pos));
+    const size_t ofs = roll(in, 0, pos);
+    return string_view( in.cbegin()+ofs, size_t(in.length()-ofs));
 }
 
-string Lout::substr(const string &in, const size_t pos, const size_t count)
+string_view Lout::substr(const string_view &in, const size_t pos, const size_t count)
 {
     const int beg = roll(in, 0,   pos);
     const int  en = roll(in, beg, count);
-    return in.substr(beg, en);
+    return string_view(in.cbegin() + beg, en-beg);
 }
 
 void Lout::printW(const string &in, const size_t width, const std::string& filler)
@@ -409,37 +426,46 @@ void Lout::preIndent()
     }
 }
 
-void Lout::print(const string &in)
+void Lout::print(string_view in)
 {
     if(canMessage())
-    {
+    {                      
         lock_guard lck(output.mtx);
         const size_t width=getWidth();  //width of text area
 
         preIndent();
-
         noBr();
 
-        for(size_t i=0;;)
+        for(;;)
         {
-            const size_t j=i;
-            const auto oldX = getLastX();
-            const auto add=width - oldX;
-            const auto len = strlen(in);
-            i+= add;
-
-            if(i>=len)
+            const size_t len=roll(in, 0);
+            const bool last = len == in.length();
+            const size_t usageLen = len - !last;
+            for(size_t i=0;;)
             {
-                const auto& outS=substr(in, j);
-                shift(strlen(outS));
-                *output.str << outS;
-                *this << flush;
-                return;
+                const size_t j=i;
+                const auto oldX = getLastX();
+                const auto add=width - oldX;
+                i+= add;
+
+                if(i>=usageLen )
+                {
+                    shift(usageLen-j);
+                    *output.str << substr(in, j,usageLen-j);
+                    break;
+                }
+                *output.str << substr(in, j, i-j) << '\n';
+                resetX();
+                indentLineStart();
             }
-            *output.str << substr(in, j, i-j) << '\n';
-            resetX();
-            indentLineStart();
+            if(last)
+            {
+                break;
+            }
+            newLine();
+            in=string_view(in.cbegin()+len, in.length()-len);
         }
+        *this << flush;
     }
 }
 
