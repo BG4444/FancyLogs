@@ -121,7 +121,10 @@ public:
         static thread_local Lout out;
         return out;
     }
-
+    Lout::LogLevel getOutLevel() const
+    {
+        return outLevel;
+    }
     void newLine();
     void shift(size_t count);
     void resetX();
