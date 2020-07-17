@@ -217,31 +217,26 @@ Lout::Lout():
              width(fmt.size()+1+brWidth+8)
 {    
     lastX.push(0); 
+    logLevels.push(make_pair(Info,MessageMask(1)));
 }
 
 bool Lout::canMessage() const
 {
-    return msgLevel <= outLevel;
+    return logLevels.top().first <= outLevel && outFilterMask & logLevels.top().second;
 }
 
 void Lout::popMsgLevel()
 {
     if(logLevels.empty())
-    {
-        pushMsgLevel(Info);
-        *this << '\n'
+    {        
+        *this << Info
+              << '\n'
               << anounce
               << QObject::tr("Wrong message stack balance!")
               << fail;
         exit(-1);
-    }
-    msgLevel=logLevels.top();
+    }    
     logLevels.pop();
-}
-
-void Lout::setOutLevel(const Lout::LogLevel outLevel)
-{
-    this->outLevel=outLevel;
 }
 
 void Lout::noBr()
@@ -466,15 +461,9 @@ void Lout::print(string_view in)
     }
 }
 
-void Lout::pushMsgLevel(const Lout::LogLevel lvl)
-{
-    logLevels.push(msgLevel);
-    msgLevel=lvl;    
-}
-
 Lout &operator <<(Lout &out, const Lout::LogLevel lvl)
 {    
-    out.pushMsgLevel(lvl);
+    out.logLevels.push( make_pair(lvl, out.logLevels.top().second) );
     return out;
 }
 
@@ -584,4 +573,10 @@ Lout &operator <<(Lout &out, const thread::id &rhs)
 Lout &operator <<(Lout &out, const unsigned int rhs)
 {
     return out << to_string(rhs);
+}
+
+Lout &operator <<(Lout &out, const Lout::MessageMask &rhs)
+{
+    out.logLevels.push(make_pair( out.logLevels.top().first, rhs));
+    return out;
 }

@@ -15,10 +15,23 @@
 #include <iostream>
 #include <sstream>
 
-
 class Lout
 {
 public:
+    class MessageMask
+    {
+        uint64_t value;
+    public:
+        static constexpr MessageMask ones()
+        {
+            return MessageMask(-1);
+        }
+        explicit constexpr MessageMask(const uint64_t value):value(value){}
+        bool operator&(const MessageMask& rhs) const
+        {
+            return value & rhs.value;
+        }
+    };
     class PictureElement
     {
         char chr=' ';
@@ -88,16 +101,18 @@ private:
     };
 
     ProtectedStream& output;
-    std::stack<LogLevel> logLevels;
+    std::stack< std::pair<LogLevel,MessageMask> > logLevels;
     constexpr static std::array<char,4> tickChars{'|','/','-','\\'};
     const std::array<std::string, 2> bars;
     std::array<char,4>::const_iterator curTick=tickChars.cbegin();
-    std::stack<size_t> lastX;
-    LogLevel msgLevel=Info;
+    std::stack<size_t> lastX;    
     LogLevel outLevel=Info;
     inline static std::mutex globalMtx;        
     bool hasAnounce = false;    
     inline static std::list< ProtectedStream > storedLogs;
+    MessageMask outFilterMask = MessageMask::ones();
+
+
     static auto tm();
     void nextTick();
     void indent(const size_t cnt, const char inner, const char chr);
@@ -116,6 +131,15 @@ private:
 
     }
 public:
+    Lout& setOutFilterMask(const uint64_t& rhs)
+    {
+        return setOutFilterMask(MessageMask(rhs));
+    }
+    Lout& setOutFilterMask(const MessageMask& rhs)
+    {
+        outFilterMask = rhs;
+        return *this;
+    }
     static Lout& getInstance()
     {
         static thread_local Lout out;
@@ -137,10 +161,13 @@ public:
     void tick();
     void percent(const size_t cur,const size_t total);
     Lout();    
-    bool canMessage() const;
-    void pushMsgLevel(const LogLevel lvl);
+    bool canMessage() const;    
     void popMsgLevel();
-    void setOutLevel(const LogLevel outLevel);    
+    Lout& setOutLevel(const LogLevel outLevel)
+    {
+        this->outLevel=outLevel;
+        return *this;
+    }
     void doAnounce();
     void print(std::string_view in);
     static size_t strlen(const std::string_view &in);
@@ -217,6 +244,8 @@ public:
     friend Lout &Color(Lout& out, const uint8_t);
     friend Lout &noColor(Lout& out);
     friend Lout &flush(Lout& out);
+    friend Lout& operator << (Lout& out, const Lout::LogLevel lvl);
+    friend Lout& operator << (Lout& out, const MessageMask& rhs);
 };
 
 Lout& operator << (Lout& out, const Lout::LogLevel lvl);
@@ -234,6 +263,7 @@ Lout& operator << (Lout& out, const Lout::PictureElement& rhs);
 Lout& operator << (Lout& out, const Lout::Picture& rhs);
 Lout& operator << (Lout& out, const float& rhs);
 Lout& operator << (Lout& out, const std::thread::id& rhs);
+Lout& operator << (Lout& out, const Lout::MessageMask& rhs);
 
 Lout &anounce(Lout &ret);
 Lout &flush(Lout& out);
