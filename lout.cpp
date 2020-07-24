@@ -9,11 +9,14 @@
 using namespace std;
 
 #ifdef _WIN32
+namespace win {
 #include <windows.h>
 
+}
     size_t Lout::getWidth()
     {
-        if(&output==&cout)
+        using namespace  win;
+        if(reinterpret_cast<void*>(&output)==reinterpret_cast<void*>(&cout))
         {
             CONSOLE_SCREEN_BUFFER_INFO nfo;
             GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),&nfo);
@@ -25,7 +28,7 @@ using namespace std;
         }
     }
 
-    Lout &Color(Lout &out, const int color)
+    Lout &Color(Lout &out, const uint8_t color)
     {
         return out;
     }
@@ -532,7 +535,7 @@ Lout &pop(Lout &out)
     return out;
 }
 
-Lout &operator <<(Lout &out, const int rhs)
+Lout &operator <<(Lout &out, const int32_t rhs)
 {
      return out << to_string(rhs);
 }
@@ -570,7 +573,7 @@ Lout &operator <<(Lout &out, const thread::id &rhs)
     return out << s.str();
 }
 
-Lout &operator <<(Lout &out, const unsigned int rhs)
+Lout &operator <<(Lout &out, const uint32_t rhs)
 {
     return out << to_string(rhs);
 }
@@ -578,5 +581,11 @@ Lout &operator <<(Lout &out, const unsigned int rhs)
 Lout &operator <<(Lout &out, const Lout::MessageMask &rhs)
 {
     out.logLevels.push(make_pair( out.logLevels.top().first, rhs));
+    return out;
+}
+
+Lout &operator <<(Lout &out, const long &rhs)
+{
+    out << to_string(rhs);
     return out;
 }
