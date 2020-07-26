@@ -28,7 +28,7 @@ namespace win {
         }
     }
 
-    Lout &Color(Lout &out, const uint8_t color)
+    Lout &Color(Lout &out, const uint8_t )
     {
         return out;
     }
@@ -572,12 +572,12 @@ Lout &operator <<(Lout &out, const thread::id &rhs)
     s << rhs;
     return out << s.str();
 }
-
+#if _WIN64 || __x86_64__
 Lout &operator <<(Lout &out, const uint32_t rhs)
 {
     return out << to_string(rhs);
 }
-
+#endif
 Lout &operator <<(Lout &out, const Lout::MessageMask &rhs)
 {
     out.logLevels.push(make_pair( out.logLevels.top().first, rhs));
