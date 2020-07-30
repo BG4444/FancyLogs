@@ -79,7 +79,7 @@ private:
         std::unique_ptr<std::ostream, std::function<void(std::ostream*)>> str;
         std::recursive_mutex mtx;
         bool lastWasBrackets = true;
-        ProtectedStream(const bool isFirst):str(
+        explicit ProtectedStream(const bool isFirst):str(
                                                         std::unique_ptr<std::ostream,
                                                         std::function<void(std::ostream*)>
                                                        >

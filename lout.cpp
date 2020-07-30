@@ -149,6 +149,7 @@ Lout& Lout::brackets(const string &str, const int color )
             unique_lock lck(globalMtx);
             for(auto&i:storedLogs)
             {
+                lock_guard lck(i.mtx);
                 if(i.str.get()!=&cout && i.lastWasBrackets)
                 {
                     const auto text = static_cast<stringstream*>(i.str.get())->str();
