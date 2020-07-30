@@ -46,7 +46,7 @@ namespace win {
     {
         if(output.str.get()==&cout)
         {
-            struct winsize size;
+            winsize size={0};
             ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
             return size.ws_col-width;
         }
@@ -152,8 +152,9 @@ Lout& Lout::brackets(const string &str, const int color )
                 lock_guard lck(i.mtx);
                 if(i.str.get()!=&cout && i.lastWasBrackets)
                 {
-                    const auto text = static_cast<stringstream*>(i.str.get())->str();
-                    i.str.reset(new stringstream());
+                    const auto stream = static_cast<stringstream*>(i.str.get());
+                    const auto text = stream->str();
+                    stream->str(string());
                     threadLogs+=text;
                 }
             }
