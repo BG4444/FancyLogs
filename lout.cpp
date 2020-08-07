@@ -8,7 +8,7 @@
 
 using namespace std;
 
-#ifdef _WIN32
+#ifdef __WINDOWS__
 namespace win {
 #include <windows.h>
 
