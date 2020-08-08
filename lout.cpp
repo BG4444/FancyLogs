@@ -188,7 +188,7 @@ Lout& Lout::brackets(const string &str, const int color )
         }
         if(!threadLogs.empty())
         {
-            *this << anounce << threadLogs << ok;
+            cout << threadLogs;
         }
 
         output.lastWasBrackets = true;
