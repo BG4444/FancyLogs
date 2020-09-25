@@ -46,7 +46,8 @@ namespace win {
     {
         if(output.str.get()==&cout)
         {
-            winsize size={0};
+            winsize size;
+            fill(reinterpret_cast<char*>(&size), reinterpret_cast<char*>(&size) + sizeof(size), 0);
             ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
             return size.ws_col-width;
         }
