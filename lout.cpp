@@ -1,10 +1,14 @@
 #include "lout.h"
 #include <iomanip>
 #include <QObject>
-#include <unicode/utf8.h>
 #include <iomanip>
 #include <cmath>
 #include <cassert>
+#include <unicode/utf8.h>
+
+#ifdef __FANCYLOGS_USE_QTDEBUG__
+#include <QtDebug>
+#endif
 
 using namespace std;
 
@@ -140,6 +144,8 @@ void Lout::printBrackets(const string& str, const int color)
     *output.str << ']';
     *this<<noColor << flush;
 }
+
+
 
 Lout& Lout::brackets(const string &str, const int color )
 {
@@ -403,13 +409,23 @@ void Lout::doAnounce()
             const auto cnt = old*4;
             lastX.push(cnt);
             indent((old-1)*4, ' ', ' ');
+#ifdef __FANCYLOGS_USE_QTDEBUG__
+            qDebug() << "\u2514\u2500\u2500\u2500";
+#else
             *output.str << "\u2514\u2500\u2500\u2500";
+#endif
         }
 
         *this<<setColor(36);
-        *output.str << '['
+#ifdef __FANCYLOGS_USE_QTDEBUG__
+        qDebug() << '['
+             <<  QDateTime::currentDateTime().toString(fmt).toStdString().c_str()
+             << "]     ";
+#else
+        *output.str<< '['
              <<  QDateTime::currentDateTime().toString(fmt).toStdString()
              << "]     ";
+#endif
         *this<<noColor;
         output.lastWasBrackets = false;
         hasAnounce = true;
@@ -449,10 +465,18 @@ void Lout::print(string_view in)
                 if(i>=usageLen )
                 {
                     shift(usageLen-j);
+#ifdef __FANCYLOGS_USE_QTDEBUG__
+                    qDebug()    << string(substr(in, j,usageLen-j)).c_str();
+#else
                     *output.str << substr(in, j,usageLen-j);
+#endif
                     break;
                 }
+#ifdef __FANCYLOGS_USE_QTDEBUG__
+                qDebug()    << string(substr(in, j, i-j)).c_str() << '\n';
+#else
                 *output.str << substr(in, j, i-j) << '\n';
+#endif
                 resetX();
                 indentLineStart();
             }
@@ -575,7 +599,7 @@ Lout &operator <<(Lout &out, const thread::id &rhs)
     s << rhs;
     return out << s.str();
 }
-#if _WIN64 || __x86_64__
+#if _WIN64 || __x86_64__ || __WASM__
 Lout &operator <<(Lout &out, const uint32_t rhs)
 {
     return out << to_string(rhs);
