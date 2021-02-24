@@ -616,3 +616,9 @@ Lout &operator <<(Lout &out, const long &rhs)
     out << to_string(rhs);
     return out;
 }
+
+Lout& operator << (Lout& out, const std::string_view& rhs)
+{
+    out.print(rhs);
+    return out;
+}

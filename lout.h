@@ -266,6 +266,7 @@ Lout& operator << (Lout& out, const Lout::Picture& rhs);
 Lout& operator << (Lout& out, const float& rhs);
 Lout& operator << (Lout& out, const std::thread::id& rhs);
 Lout& operator << (Lout& out, const Lout::MessageMask& rhs);
+Lout& operator << (Lout& out, const std::string_view& rhs);
 
 Lout &anounce(Lout &ret);
 Lout &flush(Lout& out);
