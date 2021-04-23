@@ -206,7 +206,7 @@ Lout& Lout::brackets(const string &str, const int color )
 
 void Lout::tick()
 {    
-    brackets(std::string(curTick,1), 33);
+    brackets(std::string(1, *curTick), 33);
     nextTick();
 }
 
@@ -316,14 +316,14 @@ int Lout::roll(const string_view &in, int i, size_t pos)
 string_view Lout::substr(const string_view &in, const size_t pos)
 {
     const size_t ofs = roll(in, 0, pos);
-    return string_view( in.cbegin()+ofs, size_t(in.length()-ofs));
+    return string_view(&*in.cbegin()+ofs, size_t(in.length()-ofs));
 }
 
 string_view Lout::substr(const string_view &in, const size_t pos, const size_t count)
 {
     const int beg = roll(in, 0,   pos);
     const int  en = roll(in, beg, count);
-    return string_view(in.cbegin() + beg, en-beg);
+    return string_view(&*in.cbegin() + beg, en-beg);
 }
 
 void Lout::printW(const string &in, const size_t width, const std::string& filler)
@@ -440,6 +440,13 @@ void Lout::preIndent()
     }
 }
 
+#ifdef __WINDOWS__
+ostream& operator << (ostream& out, const string_view rhs)
+{
+    return out << string(rhs);
+}
+#endif
+
 void Lout::print(string_view in)
 {
     if(canMessage())
@@ -485,7 +492,7 @@ void Lout::print(string_view in)
                 break;
             }
             newLine();
-            in=string_view(in.cbegin()+len, in.length()-len);
+            in=string_view(&*in.cbegin()+len, in.length()-len);
         }
         *this << flush;
     }
@@ -568,11 +575,6 @@ Lout &operator <<(Lout &out, const int32_t rhs)
 }
 
 Lout& operator << (Lout& out, const int64_t rhs)
-{
-     return out << to_string(rhs);
-}
-
-Lout& operator << (Lout& out, const long long int rhs)
 {
      return out << to_string(rhs);
 }

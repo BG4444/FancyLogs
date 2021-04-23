@@ -258,7 +258,6 @@ Lout& operator << (Lout& out, const size_t rhs);
 Lout& operator << (Lout& out, const char rhs);
 Lout& operator << (Lout& out, const int32_t rhs);
 Lout& operator << (Lout& out, const int64_t rhs);
-Lout& operator << (Lout& out, const long long int rhs);
 #if _WIN64 || __x86_64__ || __WASM__
 Lout& operator << (Lout& out, const uint32_t rhs);
 #endif
