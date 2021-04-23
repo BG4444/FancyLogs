@@ -574,7 +574,7 @@ Lout &operator <<(Lout &out, const int32_t rhs)
      return out << to_string(rhs);
 }
 
-Lout& operator << (Lout& out, const int64_t rhs)
+Lout& operator << (Lout& out, const long long rhs)
 {
      return out << to_string(rhs);
 }
