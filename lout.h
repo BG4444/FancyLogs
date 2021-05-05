@@ -109,7 +109,7 @@ private:
     LogLevel outLevel=Info;
     inline static std::mutex globalMtx;        
     bool hasAnounce = false;    
-    inline static std::list< ProtectedStream > storedLogs;
+    inline static std::list< ProtectedStream >* storedLogs;
     MessageMask outFilterMask = MessageMask::ones();
 
 
@@ -124,13 +124,21 @@ private:
     static ProtectedStream& mkOutput()
     {
         std::lock_guard lck(globalMtx);
-        storedLogs.emplace_back(
-                                    storedLogs.empty()
+        if(!storedLogs)
+        {
+            storedLogs = new std::list< ProtectedStream >();
+        }
+        storedLogs->emplace_back(
+                                    storedLogs->empty()
                                );
-        return storedLogs.back();
-
+        return storedLogs->back();
     }
 public:
+    ~Lout()
+    {
+        std::lock_guard lck(globalMtx);
+        delete storedLogs;
+    }
     Lout& setOutFilterMask(const uint64_t& rhs)
     {
         return setOutFilterMask(MessageMask(rhs));

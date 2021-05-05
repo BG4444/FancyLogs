@@ -154,7 +154,7 @@ Lout& Lout::brackets(const string &str, const int color )
         string threadLogs;
         {
             unique_lock lck(globalMtx);
-            for(auto&i:storedLogs)
+            for(auto&i:*storedLogs)
             {
                 lock_guard lck(i.mtx);
                 if(i.str.get()!=&cout && i.lastWasBrackets)
