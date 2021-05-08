@@ -79,6 +79,10 @@ private:
         std::unique_ptr<std::ostream, std::function<void(std::ostream*)>> str;
         std::recursive_mutex mtx;
         bool lastWasBrackets = true;
+        bool operator==(const ProtectedStream& rhs) const
+        {
+            return  str==rhs.str;
+        }
         explicit ProtectedStream(const bool isFirst):str(
                                                         std::unique_ptr<std::ostream,
                                                         std::function<void(std::ostream*)>
@@ -109,7 +113,7 @@ private:
     LogLevel outLevel=Info;
     inline static std::mutex globalMtx;        
     bool hasAnounce = false;    
-    inline static std::list< ProtectedStream > storedLogs;
+    inline static std::list< ProtectedStream >* storedLogs;
     MessageMask outFilterMask = MessageMask::ones();
 
 
@@ -124,13 +128,31 @@ private:
     static ProtectedStream& mkOutput()
     {
         std::lock_guard lck(globalMtx);
-        storedLogs.emplace_back(
-                                    storedLogs.empty()
+        if(!storedLogs)
+        {
+            storedLogs = new std::list< ProtectedStream >();
+        }
+        storedLogs->emplace_back(
+                                    storedLogs->empty()
                                );
-        return storedLogs.back();
-
+        return storedLogs->back();
     }
 public:
+    ~Lout()
+    {
+        std::lock_guard lck(globalMtx);
+
+        if(storedLogs)
+        {
+            const auto pos = find(storedLogs->cbegin(), storedLogs->cend(), output);
+            storedLogs->erase(pos);
+            if(storedLogs->empty())
+            {
+                delete storedLogs;
+                storedLogs = nullptr;
+            }
+        }
+    }
     Lout& setOutFilterMask(const uint64_t& rhs)
     {
         return setOutFilterMask(MessageMask(rhs));
