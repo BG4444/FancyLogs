@@ -109,7 +109,7 @@ void Lout::nextTick()
         }
         resetX();
         shift(getWidth());
-        indent(brWidth+1,'\b','\b');
+        indent(brWidth+2,'\b','\b');
         noBr();
     }
 }
@@ -216,7 +216,7 @@ void Lout::percent(const size_t cur, const size_t total)
     {
         const size_t percent = 100 * cur / total;
         stringstream str;
-        str << *curTick << ' ' << setw(2) << percent << '%';
+        str << *curTick << ' ' << setw(3) << percent << '%';
         brackets(str.str(), 33);
         nextTick();
     }
