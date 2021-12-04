@@ -216,8 +216,8 @@ void Lout::percent(const size_t cur, const size_t total)
     {
         const size_t percent = 100 * cur / total;
         stringstream str;
-        str << *curTick << ' ' << setw(3) << percent << '%';
-        brackets(str.str(),33);
+        str << *curTick << ' ' << setw(2) << percent << '%';
+        brackets(str.str(), 33);
         nextTick();
     }
 }
