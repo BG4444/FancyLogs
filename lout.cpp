@@ -20,7 +20,7 @@ namespace win {
     size_t Lout::getWidth()
     {
         using namespace  win;
-        if(reinterpret_cast<void*>(&output)==reinterpret_cast<void*>(&cout))
+        if(reinterpret_cast<void*>(output.str.get())==reinterpret_cast<void*>(&cout))
         {
             CONSOLE_SCREEN_BUFFER_INFO nfo;
             GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),&nfo);
@@ -412,7 +412,11 @@ void Lout::doAnounce()
 #ifdef __FANCYLOGS_USE_QTDEBUG__
             qDebug() << "\u2514\u2500\u2500\u2500";
 #else
+    #ifdef __WINDOWS__
+            *output.str << "    ";
+    #else
             *output.str << "\u2514\u2500\u2500\u2500";
+    #endif
 #endif
         }
 
